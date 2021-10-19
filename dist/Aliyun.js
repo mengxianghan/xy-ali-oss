@@ -117,7 +117,8 @@ class Aliyun extends Interface {
       ...options
     };
     this.client = null;
-    this.#init();
+
+    this._init();
   }
   /**
    * 初始化
@@ -125,7 +126,7 @@ class Aliyun extends Interface {
    */
 
 
-  async #init() {
+  async _init() {
     try {
       const {
         async

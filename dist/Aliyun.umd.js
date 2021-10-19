@@ -125,7 +125,8 @@
           ...options
         };
         this.client = null;
-        this.#init();
+
+        this._init();
       }
       /**
        * 初始化
@@ -133,7 +134,7 @@
        */
 
 
-      async #init() {
+      async _init() {
         try {
           const {
             async

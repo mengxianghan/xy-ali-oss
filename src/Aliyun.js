@@ -10,14 +10,14 @@ export default class Aliyun extends Interface {
             ...options
         }
         this.client = null
-        this.#init()
+        this._init()
     }
 
     /**
      * 初始化
      * @return {Promise<void>}
      */
-    async #init() {
+    async _init() {
         try {
             const {async} = this.options
             if (async) {

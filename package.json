@@ -2,6 +2,9 @@
   "name": "xy-oss",
   "version": "1.0.0",
   "description": "oss文件管理",
+  "main": "dist/index.umd.min.js",
+  "browser": "dist/index.umd.min.js",
+  "module": "dist/index.js",
   "scripts": {
     "build": "rollup -c",
     "test": "echo \"Error: no test specified\" && exit 1"
