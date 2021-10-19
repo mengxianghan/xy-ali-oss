@@ -28,8 +28,8 @@ function deepMerge(src = {}, target = {}) {
   return src;
 }
 
-class Interface {
-  constructor(options = {}) {
+class Alioss {
+  constructor(options) {
     this.options = {
       async: false,
       // 是否异步获取配置信息，默认 false。如果为 true 时，getConfig 需要返回 Promise 对象
@@ -63,57 +63,7 @@ class Interface {
       refreshSTSTokenInterval: 10 * 1000,
       rootPath: '',
       getConfig: function () {},
-      getToken: function () {}
-    };
-  }
-  /**
-   * 格式化结果
-   * @param {object} result
-   * @private
-   */
-
-
-  _formatResult(result = {}) {
-    const {
-      name = '',
-      url = '',
-      res: {
-        status = 500,
-        size = 0
-      }
-    } = result;
-    return {
-      code: String(status),
-      data: {
-        name,
-        url,
-        suffix: name ? `.${name.split('.').pop()}` : '',
-        size
-      }
-    };
-  }
-  /**
-   * 生成名称
-   * @param name
-   * @return {string}
-   * @private
-   */
-
-
-  _generateName(name) {
-    if (!name) return '';
-    const suffix = name.split('.').pop();
-    const path = name.split('/');
-    path.pop();
-    return `${this.options.rootPath}/${generateGUID()}.${suffix}`.replace(new RegExp('^\\/'), '');
-  }
-
-}
-
-class Alioss extends Interface {
-  constructor(options) {
-    super(options);
-    this.options = { ...this.options,
+      getToken: function () {},
       ...options
     };
     this.client = null;
@@ -237,6 +187,47 @@ class Alioss extends Interface {
       });
       resolve(result);
     });
+  }
+  /**
+   * 格式化结果
+   * @param {object} result
+   * @private
+   */
+
+
+  _formatResult(result = {}) {
+    const {
+      name = '',
+      url = '',
+      res: {
+        status = 500,
+        size = 0
+      }
+    } = result;
+    return {
+      code: String(status),
+      data: {
+        name,
+        url,
+        suffix: name ? `.${name.split('.').pop()}` : '',
+        size
+      }
+    };
+  }
+  /**
+   * 生成名称
+   * @param name
+   * @return {string}
+   * @private
+   */
+
+
+  _generateName(name) {
+    if (!name) return '';
+    const suffix = name.split('.').pop();
+    const path = name.split('/');
+    path.pop();
+    return `${this.options.rootPath}/${generateGUID()}.${suffix}`.replace(new RegExp('^\\/'), '');
   }
 
 }
