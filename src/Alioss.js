@@ -2,7 +2,7 @@ import OSS from 'ali-oss'
 import Interface from './Interface'
 import {deepMerge} from './utils'
 
-export default class Aliyun extends Interface {
+export default class Alioss extends Interface {
     constructor(options) {
         super(options)
         this.options = {

@@ -4,24 +4,24 @@ import clear from 'rollup-plugin-clear'
 import {terser} from 'rollup-plugin-terser'
 
 export default {
-    input: 'src/Aliyun.js',
+    input: 'src/Alioss.js',
     output: [
         {
-            file: 'dist/Aliyun.js',
+            file: 'dist/index.js',
             format: 'esm'
         },
         {
-            file: 'dist/Aliyun.umd.js',
+            file: 'dist/index.umd.js',
             format: 'umd',
-            name: 'Aliyun',
+            name: 'Alioss',
             globals: {
                 'ali-oss': 'OSS'
             }
         },
         {
-            file: 'dist/Aliyun.umd.min.js',
+            file: 'dist/index.umd.min.js',
             format: 'umd',
-            name: 'Aliyun',
+            name: 'Alioss',
             globals: {
                 'ali-oss': 'OSS'
             },

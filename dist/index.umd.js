@@ -1,7 +1,7 @@
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('ali-oss')) :
     typeof define === 'function' && define.amd ? define(['ali-oss'], factory) :
-    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Aliyun = factory(global.OSS));
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Alioss = factory(global.OSS));
 }(this, (function (OSS) { 'use strict';
 
     function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
@@ -118,7 +118,7 @@
 
     }
 
-    class Aliyun extends Interface {
+    class Alioss extends Interface {
       constructor(options) {
         super(options);
         this.options = { ...this.options,
@@ -249,6 +249,6 @@
 
     }
 
-    return Aliyun;
+    return Alioss;
 
 })));

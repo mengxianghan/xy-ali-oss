@@ -110,7 +110,7 @@ class Interface {
 
 }
 
-class Aliyun extends Interface {
+class Alioss extends Interface {
   constructor(options) {
     super(options);
     this.options = { ...this.options,
@@ -241,4 +241,4 @@ class Aliyun extends Interface {
 
 }
 
-export default Aliyun;
+export default Alioss;
