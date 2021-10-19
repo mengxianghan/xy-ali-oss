@@ -60,7 +60,7 @@ class Alioss {
           'Cache-Control': 'public'
         }
       },
-      refreshSTSTokenInterval: 300000,
+      refreshSTSTokenInterval: 300 * 1000,
       rootPath: '',
       getConfig: function () {},
       getToken: function () {},
@@ -195,6 +195,15 @@ class Alioss {
       });
       resolve(result);
     });
+  }
+  /**
+   * oss 实例
+   * @return {*}
+   */
+
+
+  get client() {
+    return this.client;
   }
   /**
    * 格式化结果
