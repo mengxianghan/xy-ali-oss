@@ -68,7 +68,7 @@
               'Cache-Control': 'public'
             }
           },
-          refreshSTSTokenInterval: 10 * 1000,
+          refreshSTSTokenInterval: 300000,
           rootPath: '',
           getConfig: function () {},
           getToken: function () {},
@@ -101,20 +101,28 @@
             accessKeyId,
             accessKeySecret,
             stsToken,
-            endpoint,
             bucket,
-            cname,
+            endpoint,
             region,
+            internal,
+            cname,
+            isRequestPay,
+            secure,
+            timeout,
             getToken
           } = this.options;
           this.client = new OSS__default['default']({
             accessKeyId,
             accessKeySecret,
             stsToken,
-            endpoint,
             bucket,
-            cname,
+            endpoint,
             region,
+            internal,
+            cname,
+            isRequestPay,
+            secure,
+            timeout,
             refreshSTSToken: getToken
           });
         } catch (err) {
@@ -137,6 +145,14 @@
           });
           resolve(this._formatResult(result));
         });
+      }
+      /**
+       * 暂停
+       */
+
+
+      pause() {
+        this.client.cancel();
       }
       /**
        * 分片上传
@@ -173,14 +189,6 @@
         });
       }
       /**
-       * 暂停
-       */
-
-
-      pause() {
-        this.client.cancel();
-      }
-      /**
        * 取消分片上传
        * @param {string} name
        * @param {*} uploadId
@@ -195,6 +203,15 @@
           });
           resolve(result);
         });
+      }
+      /**
+       * oss 实例
+       * @return {*}
+       */
+
+
+      get client() {
+        return this.client;
       }
       /**
        * 格式化结果

@@ -60,7 +60,7 @@ class Alioss {
           'Cache-Control': 'public'
         }
       },
-      refreshSTSTokenInterval: 10 * 1000,
+      refreshSTSTokenInterval: 300000,
       rootPath: '',
       getConfig: function () {},
       getToken: function () {},
@@ -93,20 +93,28 @@ class Alioss {
         accessKeyId,
         accessKeySecret,
         stsToken,
-        endpoint,
         bucket,
-        cname,
+        endpoint,
         region,
+        internal,
+        cname,
+        isRequestPay,
+        secure,
+        timeout,
         getToken
       } = this.options;
       this.client = new OSS({
         accessKeyId,
         accessKeySecret,
         stsToken,
-        endpoint,
         bucket,
-        cname,
+        endpoint,
         region,
+        internal,
+        cname,
+        isRequestPay,
+        secure,
+        timeout,
         refreshSTSToken: getToken
       });
     } catch (err) {
@@ -129,6 +137,14 @@ class Alioss {
       });
       resolve(this._formatResult(result));
     });
+  }
+  /**
+   * 暂停
+   */
+
+
+  pause() {
+    this.client.cancel();
   }
   /**
    * 分片上传
@@ -165,14 +181,6 @@ class Alioss {
     });
   }
   /**
-   * 暂停
-   */
-
-
-  pause() {
-    this.client.cancel();
-  }
-  /**
    * 取消分片上传
    * @param {string} name
    * @param {*} uploadId
@@ -187,6 +195,15 @@ class Alioss {
       });
       resolve(result);
     });
+  }
+  /**
+   * oss 实例
+   * @return {*}
+   */
+
+
+  get client() {
+    return this.client;
   }
   /**
    * 格式化结果
