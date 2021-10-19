@@ -197,15 +197,6 @@ class Alioss {
     });
   }
   /**
-   * oss 实例
-   * @return {*}
-   */
-
-
-  get client() {
-    return this.client;
-  }
-  /**
    * 格式化结果
    * @param {object} result
    * @private
