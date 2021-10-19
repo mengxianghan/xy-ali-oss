@@ -19,7 +19,7 @@ export default class Alioss {
             config: {
                 headers: {'Cache-Control': 'public'}
             },
-            refreshSTSTokenInterval: 10 * 1000,
+            refreshSTSTokenInterval: 300000,
             rootPath: '',
             getConfig: function () {
             },
@@ -49,20 +49,28 @@ export default class Alioss {
                 accessKeyId,
                 accessKeySecret,
                 stsToken,
-                endpoint,
                 bucket,
-                cname,
+                endpoint,
                 region,
+                internal,
+                cname,
+                isRequestPay,
+                secure,
+                timeout,
                 getToken
             } = this.options
             this.client = new OSS({
                 accessKeyId,
                 accessKeySecret,
                 stsToken,
-                endpoint,
                 bucket,
-                cname,
+                endpoint,
                 region,
+                internal,
+                cname,
+                isRequestPay,
+                secure,
+                timeout,
                 refreshSTSToken: getToken
             })
         } catch (err) {
@@ -89,6 +97,13 @@ export default class Alioss {
                 })
             resolve(this._formatResult(result))
         })
+    }
+
+    /**
+     * 暂停
+     */
+    pause() {
+        this.client.cancel()
     }
 
     /**
@@ -134,13 +149,6 @@ export default class Alioss {
     }
 
     /**
-     * 暂停
-     */
-    pause() {
-        this.client.cancel()
-    }
-
-    /**
      * 取消分片上传
      * @param {string} name
      * @param {*} uploadId
@@ -157,6 +165,14 @@ export default class Alioss {
                 })
             resolve(result)
         })
+    }
+
+    /**
+     * oss 实例
+     * @return {*}
+     */
+    get client() {
+        return this.client
     }
 
     /**
