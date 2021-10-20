@@ -1,7 +1,7 @@
 import OSS from 'ali-oss'
 import {deepMerge, generateGUID} from './utils'
 
-export default class Alioss {
+export default class AliOSS {
     constructor(options) {
         this.opts = {
             async: false, // 是否异步获取配置信息，默认 false。如果为 true 时，getConfig 需要返回 Promise 对象

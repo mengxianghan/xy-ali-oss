@@ -4,7 +4,7 @@ import clear from 'rollup-plugin-clear'
 import {terser} from 'rollup-plugin-terser'
 
 export default {
-    input: 'src/Alioss.js',
+    input: 'src/AliOSS.js',
     output: [
         {
             file: 'dist/index.js',
@@ -13,7 +13,7 @@ export default {
         {
             file: 'dist/index.umd.js',
             format: 'umd',
-            name: 'Alioss',
+            name: 'AliOSS',
             globals: {
                 'ali-oss': 'OSS'
             }
@@ -21,7 +21,7 @@ export default {
         {
             file: 'dist/index.umd.min.js',
             format: 'umd',
-            name: 'Alioss',
+            name: 'AliOSS',
             globals: {
                 'ali-oss': 'OSS'
             },
