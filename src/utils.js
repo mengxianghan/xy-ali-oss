@@ -11,7 +11,7 @@ export function generateGUID() {
 }
 
 /**
- * 合并
+ * 深度合并
  * @param src
  * @param target
  * @return {*}

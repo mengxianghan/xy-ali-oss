@@ -20,7 +20,7 @@
       });
     }
     /**
-     * 合并
+     * 深度合并
      * @param src
      * @param target
      * @return {*}
@@ -38,7 +38,7 @@
 
     class Alioss {
       constructor(options) {
-        this.options = {
+        this.opts = {
           async: false,
           // 是否异步获取配置信息，默认 false。如果为 true 时，getConfig 需要返回 Promise 对象
           accessKeyId: '',
@@ -75,56 +75,61 @@
           ...options
         };
         this.client = null;
-
-        this._init();
       }
       /**
        * 初始化
+       * @param {function} callback
        * @return {Promise<void>}
        */
 
 
-      async _init() {
+      async _init(callback) {
         try {
-          const {
-            async
-          } = this.options;
+          if (!this.client) {
+            const {
+              async
+            } = this.opts;
 
-          if (async) {
-            const asyncOptions = await this.options.getConfig();
-            this.options = { ...this.options,
-              ...(asyncOptions || {})
-            };
+            if (async) {
+              const asyncOptions = await this.opts.getConfig();
+              this.opts = { ...this.opts,
+                ...(asyncOptions || {})
+              };
+            }
+
+            const {
+              accessKeyId,
+              accessKeySecret,
+              stsToken,
+              bucket,
+              endpoint,
+              region,
+              internal,
+              cname,
+              isRequestPay,
+              secure,
+              timeout,
+              getToken
+            } = this.opts;
+            this.client = new OSS__default['default']({
+              accessKeyId,
+              accessKeySecret,
+              stsToken,
+              bucket,
+              endpoint,
+              region,
+              internal,
+              cname,
+              isRequestPay,
+              secure,
+              timeout,
+              refreshSTSToken: getToken
+            });
           }
 
-          const {
-            accessKeyId,
-            accessKeySecret,
-            stsToken,
-            bucket,
-            endpoint,
-            region,
-            internal,
-            cname,
-            isRequestPay,
-            secure,
-            timeout,
-            getToken
-          } = this.options;
-          this.client = new OSS__default['default']({
-            accessKeyId,
-            accessKeySecret,
-            stsToken,
-            bucket,
-            endpoint,
-            region,
-            internal,
-            cname,
-            isRequestPay,
-            secure,
-            timeout,
-            refreshSTSToken: getToken
-          });
+          if (Object.prototype.toString.call(callback) === '[object Function]') {
+            callback.call(this, this.client);
+          }
         } catch (err) {
           console.error(err.message);
         }
@@ -140,19 +145,23 @@
 
       upload(name, file, config = {}) {
         return new Promise(async (resolve, reject) => {
-          const result = await this.client.put(this._generateName(name), file, deepMerge(config, this.options.config)).catch(err => {
-            reject(err);
+          await this._init(async client => {
+            const result = await client.put(this._generateName(name), file, deepMerge(config, this.opts.config)).catch(err => {
+              reject(err);
+            });
+            resolve(this._formatResult(result));
           });
-          resolve(this._formatResult(result));
         });
       }
       /**
-       * 暂停
+       * 取消
        */
 
 
-      pause() {
-        this.client.cancel();
+      async cancel() {
+        await this._init(async client => {
+          client.cancel();
+        });
       }
       /**
        * 分片上传
@@ -165,10 +174,12 @@
 
       multipartUpload(name, file, config = {}) {
         return new Promise(async (resolve, reject) => {
-          const result = await this.client.multipartUpload(this._generateName(name), file, deepMerge(config, this.options.config)).catch(err => {
-            reject(err);
+          await this._init(async client => {
+            const result = await client.multipartUpload(this._generateName(name), file, deepMerge(config, this.opts.config)).catch(err => {
+              reject(err);
+            });
+            resolve(this._formatResult(result));
           });
-          resolve(this._formatResult(result));
         });
       }
       /**
@@ -182,10 +193,12 @@
 
       resumeMultipartUpload(name, file, config = {}) {
         return new Promise(async (resolve, reject) => {
-          const result = await this.client.multipartUpload(name, file, deepMerge(config, this.options.config)).catch(err => {
-            reject(err);
+          await this._init(async client => {
+            const result = await client.multipartUpload(name, file, deepMerge(config, this.opts.config)).catch(err => {
+              reject(err);
+            });
+            resolve(this._formatResult(result));
           });
-          resolve(this._formatResult(result));
         });
       }
       /**
@@ -198,10 +211,12 @@
 
       abortMultipartUpload(name, uploadId) {
         return new Promise(async (resolve, reject) => {
-          const result = await this.client.abortMultipartUpload(name, uploadId).catch(err => {
-            reject(err);
+          await this._init(async client => {
+            const result = await client.abortMultipartUpload(name, uploadId).catch(err => {
+              reject(err);
+            });
+            resolve(result);
           });
-          resolve(result);
         });
       }
       /**
@@ -243,7 +258,7 @@
         const suffix = name.split('.').pop();
         const path = name.split('/');
         path.pop();
-        return `${this.options.rootPath}/${generateGUID()}.${suffix}`.replace(new RegExp('^\\/'), '');
+        return `${this.opts.rootPath}/${generateGUID()}.${suffix}`.replace(new RegExp('^\\/'), '');
       }
 
     }

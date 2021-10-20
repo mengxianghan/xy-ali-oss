@@ -3,7 +3,7 @@
 ### NPM
 
 ```shell
-npm install xy-alioss --save
+npm install --save xy-alioss
 ```
 
 ## 使用
@@ -43,9 +43,9 @@ const store = new Alioss(options)
 
 文件上传，一般用于小于 200M 的文件
 
-### .pause()
+### .cancel()
 
-暂停上传
+取消上传
 
 ### .multipartUpload(name, file [, config])
 
