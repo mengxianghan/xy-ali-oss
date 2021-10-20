@@ -75,7 +75,7 @@ export default class Alioss {
                     refreshSTSToken: getToken
                 })
             }
-            if (Object.prototype.toString.call(callback) === '[object Function]') {
+            if (['[object Function]', '[object AsyncFunction]'].includes(Object.prototype.toString.call(callback))) {
                 callback.call(this, this.client)
             }
         } catch (err) {
@@ -91,17 +91,20 @@ export default class Alioss {
      * @return {Promise<unknown>}
      */
     upload(name, file, config = {}) {
-        return new Promise(async (resolve, reject) => {
-            await this._init(async (client) => {
-                const result = await client
+        return new Promise((resolve, reject) => {
+            this._init(function (client) {
+                client
                     .put(
                         this._generateName(name),
                         file,
                         deepMerge(config, this.opts.config)
-                    ).catch((err) => {
+                    )
+                    .then((result) => {
+                        resolve(this._formatResult(result))
+                    })
+                    .catch((err) => {
                         reject(err)
                     })
-                resolve(this._formatResult(result))
             })
         })
     }
@@ -110,7 +113,7 @@ export default class Alioss {
      * 取消
      */
     async cancel() {
-        await this._init(async (client) => {
+        await this._init(function (client) {
             client.cancel()
         })
     }
@@ -124,16 +127,20 @@ export default class Alioss {
      */
     multipartUpload(name, file, config = {}) {
         return new Promise(async (resolve, reject) => {
-            await this._init(async (client) => {
-                const result = await client
+            await this._init(function (client) {
+                client
                     .multipartUpload(
                         this._generateName(name),
                         file,
                         deepMerge(config, this.opts.config)
-                    ).catch((err) => {
+                    )
+                    .then((result) => {
+                        resolve(this._formatResult(result))
+                    })
+                    .catch((err) => {
                         reject(err)
                     })
-                resolve(this._formatResult(result))
+
             })
         })
     }
@@ -147,16 +154,20 @@ export default class Alioss {
      */
     resumeMultipartUpload(name, file, config = {}) {
         return new Promise(async (resolve, reject) => {
-            await this._init(async (client) => {
-                const result = await client
+            await this._init(function (client) {
+                client
                     .multipartUpload(
                         name,
                         file,
                         deepMerge(config, this.opts.config)
-                    ).catch((err) => {
+                    )
+                    .then((result) => {
+                        resolve(this._formatResult(result))
+                    })
+                    .catch((err) => {
                         reject(err)
                     })
-                resolve(this._formatResult(result))
+
             })
         })
     }
@@ -169,15 +180,19 @@ export default class Alioss {
      */
     abortMultipartUpload(name, uploadId) {
         return new Promise(async (resolve, reject) => {
-            await this._init(async (client) => {
-                const result = await client
+            await this._init(function (client) {
+                client
                     .abortMultipartUpload(
                         name,
                         uploadId
-                    ).catch((err) => {
+                    )
+                    .then((result) => {
+                        resolve(result)
+                    })
+                    .catch((err) => {
                         reject(err)
                     })
-                resolve(result)
+
             })
         })
     }
@@ -215,6 +230,7 @@ export default class Alioss {
         const suffix = name.split('.').pop()
         const path = name.split('/')
         path.pop()
-        return `${this.opts.rootPath}/${generateGUID()}.${suffix}`.replace(new RegExp('^\\/'), '')
+        return `${this.opts.rootPath}/${generateGUID()}.${suffix}`
+            .replace(new RegExp('^\\/'), '')
     }
 }

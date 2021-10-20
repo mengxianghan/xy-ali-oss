@@ -119,7 +119,7 @@ class Alioss {
         });
       }
 
-      if (Object.prototype.toString.call(callback) === '[object Function]') {
+      if (['[object Function]', '[object AsyncFunction]'].includes(Object.prototype.toString.call(callback))) {
         callback.call(this, this.client);
       }
     } catch (err) {
@@ -136,12 +136,13 @@ class Alioss {
 
 
   upload(name, file, config = {}) {
-    return new Promise(async (resolve, reject) => {
-      await this._init(async client => {
-        const result = await client.put(this._generateName(name), file, deepMerge(config, this.opts.config)).catch(err => {
+    return new Promise((resolve, reject) => {
+      this._init(function (client) {
+        client.put(this._generateName(name), file, deepMerge(config, this.opts.config)).then(result => {
+          resolve(this._formatResult(result));
+        }).catch(err => {
           reject(err);
         });
-        resolve(this._formatResult(result));
       });
     });
   }
@@ -151,7 +152,7 @@ class Alioss {
 
 
   async cancel() {
-    await this._init(async client => {
+    await this._init(function (client) {
       client.cancel();
     });
   }
@@ -166,11 +167,12 @@ class Alioss {
 
   multipartUpload(name, file, config = {}) {
     return new Promise(async (resolve, reject) => {
-      await this._init(async client => {
-        const result = await client.multipartUpload(this._generateName(name), file, deepMerge(config, this.opts.config)).catch(err => {
+      await this._init(function (client) {
+        client.multipartUpload(this._generateName(name), file, deepMerge(config, this.opts.config)).then(result => {
+          resolve(this._formatResult(result));
+        }).catch(err => {
           reject(err);
         });
-        resolve(this._formatResult(result));
       });
     });
   }
@@ -185,11 +187,12 @@ class Alioss {
 
   resumeMultipartUpload(name, file, config = {}) {
     return new Promise(async (resolve, reject) => {
-      await this._init(async client => {
-        const result = await client.multipartUpload(name, file, deepMerge(config, this.opts.config)).catch(err => {
+      await this._init(function (client) {
+        client.multipartUpload(name, file, deepMerge(config, this.opts.config)).then(result => {
+          resolve(this._formatResult(result));
+        }).catch(err => {
           reject(err);
         });
-        resolve(this._formatResult(result));
       });
     });
   }
@@ -203,11 +206,12 @@ class Alioss {
 
   abortMultipartUpload(name, uploadId) {
     return new Promise(async (resolve, reject) => {
-      await this._init(async client => {
-        const result = await client.abortMultipartUpload(name, uploadId).catch(err => {
+      await this._init(function (client) {
+        client.abortMultipartUpload(name, uploadId).then(result => {
+          resolve(result);
+        }).catch(err => {
           reject(err);
         });
-        resolve(result);
       });
     });
   }
