@@ -12,7 +12,7 @@ npm install --save xy-alioss
 import Alioss from 'xy-alioss'
 
 const options = {}
-const store = new Alioss(options)
+const store = new AliOSS(options)
 ```
 
 ## Options
@@ -45,7 +45,7 @@ const store = new Alioss(options)
 
 ### .cancel()
 
-取消上传
+取消/停止上传
 
 ### .multipartUpload(name, file [, config])
 
