@@ -243,7 +243,7 @@
           code: String(status),
           data: {
             name,
-            url: requestUrls && requestUrls.length ? requestUrls[0] : '',
+            url: requestUrls && requestUrls.length ? requestUrls[0].split('?')[0] : '',
             suffix: name ? `.${name.split('.').pop()}` : '',
             size
           }
