@@ -205,14 +205,13 @@ export default class AliOSS {
     _formatResult(result = {}) {
         const {
             name = '',
-            url = '',
-            res: {status = 500, size = 0}
+            res: {status = 500, size = 0, requestUrls = []}
         } = result
         return {
             code: String(status),
             data: {
                 name,
-                url,
+                url: requestUrls && requestUrls.length ? requestUrls[0] : '',
                 suffix: name ? `.${name.split('.').pop()}` : '',
                 size
             }

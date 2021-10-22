@@ -1,7 +1,7 @@
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('ali-oss')) :
     typeof define === 'function' && define.amd ? define(['ali-oss'], factory) :
-    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Alioss = factory(global.OSS));
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.AliOSS = factory(global.OSS));
 }(this, (function (OSS) { 'use strict';
 
     function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
@@ -36,7 +36,7 @@
       return src;
     }
 
-    class Alioss {
+    class AliOSS {
       constructor(options) {
         this.opts = {
           async: false,
@@ -233,17 +233,17 @@
       _formatResult(result = {}) {
         const {
           name = '',
-          url = '',
           res: {
             status = 500,
-            size = 0
+            size = 0,
+            requestUrls = []
           }
         } = result;
         return {
           code: String(status),
           data: {
             name,
-            url,
+            url: requestUrls && requestUrls.length ? requestUrls[0] : '',
             suffix: name ? `.${name.split('.').pop()}` : '',
             size
           }
@@ -267,6 +267,6 @@
 
     }
 
-    return Alioss;
+    return AliOSS;
 
 })));
