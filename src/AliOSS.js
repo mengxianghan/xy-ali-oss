@@ -229,7 +229,7 @@ export default class AliOSS {
         const suffix = name.split('.').pop()
         const path = name.split('/')
         path.pop()
-        return `${this.opts.rootPath}/${path}/${generateGUID()}.${suffix}`
+        return `${this.opts.rootPath}/${path.join('/')}/${generateGUID()}.${suffix}`
             .replace(new RegExp('^\\/'), '')
     }
 }

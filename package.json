@@ -1,6 +1,6 @@
 {
-  "name": "xy-alioss",
-  "version": "1.0.3",
+  "name": "xy-ali-oss",
+  "version": "1.0.0",
   "description": "阿里 oss 文件管理",
   "main": "dist/index.umd.min.js",
   "browser": "dist/index.umd.min.js",
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mengxianghan/xy-alioss.git"
+    "url": "https://github.com/mengxianghan/xy-ali-oss.git"
   },
   "keywords": [
     "oss",

@@ -3,13 +3,13 @@
 ### NPM
 
 ```shell
-npm install --save xy-alioss
+npm install --save xy-ali-oss
 ```
 
 ## 使用
 
 ```javascript
-import Alioss from 'xy-alioss'
+import Alioss from 'xy-ali-oss'
 
 const options = {}
 const store = new AliOSS(options)
