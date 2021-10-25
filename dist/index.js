@@ -254,7 +254,7 @@ class AliOSS {
     const suffix = name.split('.').pop();
     const path = name.split('/');
     path.pop();
-    return `${this.opts.rootPath}/${path}/${generateGUID()}.${suffix}`.replace(new RegExp('^\\/'), '');
+    return `${this.opts.rootPath}/${path.join('/')}/${generateGUID()}.${suffix}`.replace(new RegExp('^\\/'), '');
   }
 
 }
