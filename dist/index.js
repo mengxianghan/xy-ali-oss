@@ -58,7 +58,8 @@ class AliOSS {
       config: {
         headers: {
           'Cache-Control': 'public'
-        }
+        },
+        rename: true
       },
       refreshSTSTokenInterval: 300 * 1000,
       rootPath: '',
@@ -136,9 +137,10 @@ class AliOSS {
 
 
   upload(name, file, config = {}) {
+    config = deepMerge(this.opts.config, config);
     return new Promise((resolve, reject) => {
       this._init(function (client) {
-        client.put(this._generateName(name), file, deepMerge(config, this.opts.config)).then(result => {
+        client.put(this._generateName(name, config?.rename), file, config).then(result => {
           resolve(this._formatResult(result));
         }).catch(err => {
           reject(err);
@@ -166,9 +168,10 @@ class AliOSS {
 
 
   multipartUpload(name, file, config = {}) {
+    config = deepMerge(this.opts.config, config);
     return new Promise(async (resolve, reject) => {
       await this._init(function (client) {
-        client.multipartUpload(this._generateName(name), file, deepMerge(config, this.opts.config)).then(result => {
+        client.multipartUpload(this._generateName(name, config?.rename), file, config).then(result => {
           resolve(this._formatResult(result));
         }).catch(err => {
           reject(err);
@@ -243,20 +246,22 @@ class AliOSS {
   }
   /**
    * 生成名称
-   * @param name
+   * @param {string} name 文件原始名
+   * @param {boolean} rename 重命名
    * @return {string}
    * @private
    */
 
 
-  _generateName(name) {
+  _generateName(name, rename = true) {
     if (!name) return '';
     const suffix = name.split('.').pop();
     const path = name.split('/');
+    name = rename ? `${generateGUID()}.${suffix}` : name;
     path.pop();
-    return `${this.opts.rootPath}/${path.join('/')}/${generateGUID()}.${suffix}`.replace(new RegExp('^\\/'), '');
+    return `${this.opts.rootPath}/${path.join('/')}/${name}`.replace(new RegExp('^\\/'), '');
   }
 
 }
 
-export default AliOSS;
+export { AliOSS as default };

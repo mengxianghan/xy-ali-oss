@@ -31,7 +31,8 @@ const store = new AliOSS(options)
 | isRequestPay | 否 | bucket是否开启请求者付费模式，默认false。具体可查看[请求者付费模式](https://help.aliyun.com/document_detail/91337.htm?spm=a2c4g.11186623.0.0.63ab1cd5c2XL21#concept-yls-jm2-2fb) |
 | secure | 否 | 则使用 HTTPS， (secure: false) 则使用 HTTP，详情请查看[常见问题](https://help.aliyun.com/document_detail/63401.htm?spm=a2c4g.11186623.0.0.63ab1cd5c2XL21#concept-63401-zh) |
 | timeout | 否 | 超时时间，默认 60s |
-| config | 否 | 上传公共配置信息，默认 headers: {'Cache-Control': 'public'} |
+| config.rename | 否 | 是否重命名上传文件，默认 true；仅适用于 Methods.upload、 Methods.multipartUpload，以上两个方法使用时也可单独在 config 中设置 rename 属性，设置后覆盖公共 rename 属性|
+| config.headers | 否 | 上传公共配置信息，默认 {'Cache-Control': 'public'} |
 | refreshSTSTokenInterval | 否 | STSToken 刷新间隔，默认 300000ms|
 | rootPath | 否 | 根目录，默认为空 |
 | getConfig | 否 | 动态获取配置信息，async为true时必填，返回一个 Promise 对象 |

@@ -2,7 +2,7 @@
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('ali-oss')) :
     typeof define === 'function' && define.amd ? define(['ali-oss'], factory) :
     (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.AliOSS = factory(global.OSS));
-}(this, (function (OSS) { 'use strict';
+})(this, (function (OSS) { 'use strict';
 
     function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
@@ -66,7 +66,8 @@
           config: {
             headers: {
               'Cache-Control': 'public'
-            }
+            },
+            rename: true
           },
           refreshSTSTokenInterval: 300 * 1000,
           rootPath: '',
@@ -111,7 +112,7 @@
               timeout,
               getToken
             } = this.opts;
-            this.client = new OSS__default['default']({
+            this.client = new OSS__default["default"]({
               accessKeyId,
               accessKeySecret,
               stsToken,
@@ -144,9 +145,10 @@
 
 
       upload(name, file, config = {}) {
+        config = deepMerge(this.opts.config, config);
         return new Promise((resolve, reject) => {
           this._init(function (client) {
-            client.put(this._generateName(name), file, deepMerge(config, this.opts.config)).then(result => {
+            client.put(this._generateName(name, config?.rename), file, config).then(result => {
               resolve(this._formatResult(result));
             }).catch(err => {
               reject(err);
@@ -174,9 +176,10 @@
 
 
       multipartUpload(name, file, config = {}) {
+        config = deepMerge(this.opts.config, config);
         return new Promise(async (resolve, reject) => {
           await this._init(function (client) {
-            client.multipartUpload(this._generateName(name), file, deepMerge(config, this.opts.config)).then(result => {
+            client.multipartUpload(this._generateName(name, config?.rename), file, config).then(result => {
               resolve(this._formatResult(result));
             }).catch(err => {
               reject(err);
@@ -251,22 +254,24 @@
       }
       /**
        * 生成名称
-       * @param name
+       * @param {string} name 文件原始名
+       * @param {boolean} rename 重命名
        * @return {string}
        * @private
        */
 
 
-      _generateName(name) {
+      _generateName(name, rename = true) {
         if (!name) return '';
         const suffix = name.split('.').pop();
         const path = name.split('/');
+        name = rename ? `${generateGUID()}.${suffix}` : name;
         path.pop();
-        return `${this.opts.rootPath}/${path.join('/')}/${generateGUID()}.${suffix}`.replace(new RegExp('^\\/'), '');
+        return `${this.opts.rootPath}/${path.join('/')}/${name}`.replace(new RegExp('^\\/'), '');
       }
 
     }
 
     return AliOSS;
 
-})));
+}));

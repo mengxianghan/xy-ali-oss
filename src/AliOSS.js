@@ -17,7 +17,8 @@ export default class AliOSS {
             secure: true, //  则使用 HTTPS， (secure: false) 则使用 HTTP，详情请查看常见问题 (https://help.aliyun.com/document_detail/63401.htm?spm=a2c4g.11186623.0.0.63ab1cd5c2XL21#concept-63401-zh)
             timeout: '60s', // 超时时间，默认 60s
             config: {
-                headers: {'Cache-Control': 'public'}
+                headers: {'Cache-Control': 'public'},
+                rename: true
             },
             refreshSTSTokenInterval: 300 * 1000,
             rootPath: '',
@@ -91,13 +92,14 @@ export default class AliOSS {
      * @return {Promise<unknown>}
      */
     upload(name, file, config = {}) {
+        config = deepMerge(this.opts.config, config)
         return new Promise((resolve, reject) => {
             this._init(function (client) {
                 client
                     .put(
-                        this._generateName(name),
+                        this._generateName(name, config?.rename),
                         file,
-                        deepMerge(config, this.opts.config)
+                        config
                     )
                     .then((result) => {
                         resolve(this._formatResult(result))
@@ -126,13 +128,14 @@ export default class AliOSS {
      * @return {Promise<unknown>}
      */
     multipartUpload(name, file, config = {}) {
+        config = deepMerge(this.opts.config, config)
         return new Promise(async (resolve, reject) => {
             await this._init(function (client) {
                 client
                     .multipartUpload(
-                        this._generateName(name),
+                        this._generateName(name, config?.rename),
                         file,
-                        deepMerge(config, this.opts.config)
+                        config
                     )
                     .then((result) => {
                         resolve(this._formatResult(result))
@@ -192,7 +195,6 @@ export default class AliOSS {
                     .catch((err) => {
                         reject(err)
                     })
-
             })
         })
     }
@@ -220,16 +222,18 @@ export default class AliOSS {
 
     /**
      * 生成名称
-     * @param name
+     * @param {string} name 文件原始名
+     * @param {boolean} rename 重命名
      * @return {string}
      * @private
      */
-    _generateName(name) {
+    _generateName(name, rename = true) {
         if (!name) return ''
         const suffix = name.split('.').pop()
         const path = name.split('/')
+        name = rename ? `${generateGUID()}.${suffix}` : name
         path.pop()
-        return `${this.opts.rootPath}/${path.join('/')}/${generateGUID()}.${suffix}`
+        return `${this.opts.rootPath}/${path.join('/')}/${name}`
             .replace(new RegExp('^\\/'), '')
     }
 }
