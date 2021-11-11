@@ -95,18 +95,15 @@ export default class AliOSS {
         config = deepMerge(this.opts.config, config)
         return new Promise((resolve, reject) => {
             this._init(function (client) {
-                client
-                    .put(
-                        this._generateName(name, config?.rename),
-                        file,
-                        config
-                    )
-                    .then((result) => {
-                        resolve(this._formatResult(result))
-                    })
-                    .catch((err) => {
-                        reject(err)
-                    })
+                client.put(
+                    this._generateName(name, config?.rename),
+                    file,
+                    config
+                ).then((result) => {
+                    resolve(this._formatResult(result))
+                }).catch((err) => {
+                    reject(err)
+                })
             })
         })
     }
@@ -131,18 +128,15 @@ export default class AliOSS {
         config = deepMerge(this.opts.config, config)
         return new Promise(async (resolve, reject) => {
             await this._init(function (client) {
-                client
-                    .multipartUpload(
-                        this._generateName(name, config?.rename),
-                        file,
-                        config
-                    )
-                    .then((result) => {
-                        resolve(this._formatResult(result))
-                    })
-                    .catch((err) => {
-                        reject(err)
-                    })
+                client.multipartUpload(
+                    this._generateName(name, config?.rename),
+                    file,
+                    config
+                ).then((result) => {
+                    resolve(this._formatResult(result))
+                }).catch((err) => {
+                    reject(err)
+                })
 
             })
         })
@@ -158,18 +152,15 @@ export default class AliOSS {
     resumeMultipartUpload(name, file, config = {}) {
         return new Promise(async (resolve, reject) => {
             await this._init(function (client) {
-                client
-                    .multipartUpload(
-                        name,
-                        file,
-                        deepMerge(config, this.opts.config)
-                    )
-                    .then((result) => {
-                        resolve(this._formatResult(result))
-                    })
-                    .catch((err) => {
-                        reject(err)
-                    })
+                client.multipartUpload(
+                    name,
+                    file,
+                    deepMerge(config, this.opts.config)
+                ).then((result) => {
+                    resolve(this._formatResult(result))
+                }).catch((err) => {
+                    reject(err)
+                })
 
             })
         })
@@ -184,17 +175,14 @@ export default class AliOSS {
     abortMultipartUpload(name, uploadId) {
         return new Promise(async (resolve, reject) => {
             await this._init(function (client) {
-                client
-                    .abortMultipartUpload(
-                        name,
-                        uploadId
-                    )
-                    .then((result) => {
-                        resolve(result)
-                    })
-                    .catch((err) => {
-                        reject(err)
-                    })
+                client.abortMultipartUpload(
+                    name,
+                    uploadId
+                ).then((result) => {
+                    resolve(result)
+                }).catch((err) => {
+                    reject(err)
+                })
             })
         })
     }
@@ -233,7 +221,6 @@ export default class AliOSS {
         const path = name.split('/')
         name = rename ? `${generateGUID()}.${suffix}` : name
         path.pop()
-        return `${this.opts.rootPath}/${path.join('/')}/${name}`
-            .replace(new RegExp('^\\/'), '')
+        return `${this.opts.rootPath}/${path.join('/')}/${name}`.replace(new RegExp('^\\/', 'g'), '')
     }
 }

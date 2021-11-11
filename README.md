@@ -63,3 +63,7 @@ const store = new AliOSS(options)
 ## 依赖
 
 [ali-oss](https://www.npmjs.com/package/ali-oss)
+
+## 参考
+
+[对象储存 OSS](https://help.aliyun.com/product/31815.html)
