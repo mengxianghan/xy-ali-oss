@@ -221,6 +221,8 @@ export default class AliOSS {
         const path = name.split('/')
         name = rename ? `${generateGUID()}.${suffix}` : name
         path.pop()
-        return `${this.opts.rootPath}/${path.join('/')}/${name}`.replace(new RegExp('^\\/', 'g'), '')
+        return `${this.opts.rootPath}/${path.join('/')}/${name}`
+            .replace(new RegExp('\\/{2,}', 'g'), '/')
+            .replace(new RegExp('^\/', 'g'), '')
     }
 }

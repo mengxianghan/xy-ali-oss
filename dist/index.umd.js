@@ -508,7 +508,7 @@
         var path = name.split('/');
         name = rename ? "".concat(generateGUID(), ".").concat(suffix) : name;
         path.pop();
-        return "".concat(this.opts.rootPath, "/").concat(path.join('/'), "/").concat(name).replace(new RegExp('^\\/', 'g'), '');
+        return "".concat(this.opts.rootPath, "/").concat(path.join('/'), "/").concat(name).replace(new RegExp('\\/{2,}', 'g'), '/').replace(new RegExp('^\/', 'g'), '');
       }
     }]);
 
