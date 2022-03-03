@@ -486,7 +486,7 @@
           data: {
             name: name,
             url: requestUrls && requestUrls.length ? requestUrls[0].split('?')[0] : '',
-            suffix: name ? ".".concat(name.split('.').pop()) : '',
+            suffix: this._getSuffix(name),
             size: size
           }
         };
@@ -504,11 +504,20 @@
       value: function _generateName(name) {
         var rename = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
         if (!name) return '';
-        var suffix = name.split('.').pop();
-        var path = name.split('/');
-        name = rename ? "".concat(generateGUID(), ".").concat(suffix) : name;
-        path.pop();
-        return "".concat(this.opts.rootPath, "/").concat(path.join('/'), "/").concat(name).replace(new RegExp('\\/{2,}', 'g'), '/').replace(new RegExp('^\/', 'g'), '');
+        var path = name.substring(0, name.lastIndexOf('/'));
+        var newName = rename ? "".concat(path, "/").concat(generateGUID()).concat(this._getSuffix(name)) : name;
+        return "".concat(this.opts.rootPath, "/").concat(newName).replace(new RegExp('\\/{2,}', 'g'), '/').replace(new RegExp('^\/', 'g'), '');
+      }
+      /**
+       * 获取文件后缀
+       * @param {string} name 文件名 
+       * @return {string}
+       */
+
+    }, {
+      key: "_getSuffix",
+      value: function _getSuffix(name) {
+        return name.substring(name.lastIndexOf('.'), name.length);
       }
     }]);
 

@@ -1,5 +1,5 @@
 import OSS from 'ali-oss'
-import {deepMerge, generateGUID} from './utils'
+import { deepMerge, generateGUID } from './utils'
 
 export default class AliOSS {
     constructor(options) {
@@ -17,7 +17,7 @@ export default class AliOSS {
             secure: true, //  则使用 HTTPS， (secure: false) 则使用 HTTP，详情请查看常见问题 (https://help.aliyun.com/document_detail/63401.htm?spm=a2c4g.11186623.0.0.63ab1cd5c2XL21#concept-63401-zh)
             timeout: '60s', // 超时时间，默认 60s
             config: {
-                headers: {'Cache-Control': 'public'},
+                headers: { 'Cache-Control': 'public' },
                 rename: true
             },
             refreshSTSTokenInterval: 300 * 1000,
@@ -39,7 +39,7 @@ export default class AliOSS {
     async _init(callback) {
         try {
             if (!this.client) {
-                const {async} = this.opts
+                const { async } = this.opts
                 if (async) {
                     const asyncOptions = await this.opts.getConfig()
                     this.opts = {
@@ -195,14 +195,14 @@ export default class AliOSS {
     _formatResult(result = {}) {
         const {
             name = '',
-            res: {status = 500, size = 0, requestUrls = []}
+            res: { status = 500, size = 0, requestUrls = [] }
         } = result
         return {
             code: String(status),
             data: {
                 name,
                 url: requestUrls && requestUrls.length ? requestUrls[0].split('?')[0] : '',
-                suffix: name ? `.${name.split('.').pop()}` : '',
+                suffix: this._getSuffix(name),
                 size
             }
         }
@@ -217,12 +217,19 @@ export default class AliOSS {
      */
     _generateName(name, rename = true) {
         if (!name) return ''
-        const suffix = name.split('.').pop()
-        const path = name.split('/')
-        name = rename ? `${generateGUID()}.${suffix}` : name
-        path.pop()
-        return `${this.opts.rootPath}/${path.join('/')}/${name}`
+        const path = name.substring(0, name.lastIndexOf('/'))
+        const newName = rename ? `${path}/${generateGUID()}${this._getSuffix(name)}` : name
+        return `${this.opts.rootPath}/${newName}`
             .replace(new RegExp('\\/{2,}', 'g'), '/')
             .replace(new RegExp('^\/', 'g'), '')
+    }
+
+    /**
+     * 获取文件后缀
+     * @param {string} name 文件名 
+     * @return {string}
+     */
+    _getSuffix(name) {
+        return name.substring(name.lastIndexOf('.'), name.length)
     }
 }
