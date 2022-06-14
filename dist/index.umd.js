@@ -148,45 +148,70 @@
 
     return src;
   }
+  /**
+   * 格式化路径
+   * @param {string} path 路径
+   * @returns {string}
+   */
+
+  function formatPath(path) {
+    return path.replace(new RegExp('\\/{2,}', 'g'), '/').replace(new RegExp('^/', 'g'), '');
+  }
+  /**
+   * 获取后缀
+   * @param {string} name 名称
+   */
+
+  function getSuffix(name) {
+    return name.substring(name.lastIndexOf('.'), name.length);
+  }
 
   var AliOSS = /*#__PURE__*/function () {
     function AliOSS(options) {
       _classCallCheck(this, AliOSS);
 
       this.opts = _objectSpread2({
-        async: false,
         // 是否异步获取配置信息，默认 false。如果为 true 时，getConfig 需要返回 Promise 对象
-        accessKeyId: '',
+        async: false,
         // 通过阿里云控制台创建的access key
-        accessKeySecret: '',
+        accessKeyId: '',
         // 通过阿里云控制台创建的access secret
-        stsToken: '',
+        accessKeySecret: '',
         // 使用临时授权方式，详情请参见使用STS访问 (https://help.aliyun.com/document_detail/32077.htm?spm=a2c4g.11186623.0.0.63ab1cd5c2XL21#concept-32077-zh)
-        bucket: '',
+        stsToken: '',
         // 通过控制台创建的bucket
-        endpoint: '',
+        bucket: '',
         // OSS域名
-        region: 'oss-cn-hangzhou',
+        endpoint: '',
         // bucket 所在的区域，默认 oss-cn-hangzhou
-        internal: false,
+        region: 'oss-cn-hangzhou',
         // 是否使用阿里云内网访问，默认false。比如通过ECS访问OSS，则设置为true，采用internal的endpoint可节约费用
-        cname: false,
+        internal: false,
         // 是否支持上传自定义域名，默认false。如果cname为true，endpoint传入自定义域名时，自定义域名需要先同bucket进行绑定
-        isRequestPay: false,
+        cname: false,
         // bucket是否开启请求者付费模式，默认false。具体可查看请求者付费模式 (https://help.aliyun.com/document_detail/91337.htm?spm=a2c4g.11186623.0.0.63ab1cd5c2XL21#concept-yls-jm2-2fb)
+        isRequestPay: false,
+        // 则使用 HTTPS， (secure: false) 则使用 HTTP，详情请查看常见问题 (https://help.aliyun.com/document_detail/63401.htm?spm=a2c4g.11186623.0.0.63ab1cd5c2XL21#concept-63401-zh)
         secure: true,
-        //  则使用 HTTPS， (secure: false) 则使用 HTTP，详情请查看常见问题 (https://help.aliyun.com/document_detail/63401.htm?spm=a2c4g.11186623.0.0.63ab1cd5c2XL21#concept-63401-zh)
-        timeout: '60s',
         // 超时时间，默认 60s
+        timeout: '60s',
         config: {
           headers: {
             'Cache-Control': 'public'
           },
-          rename: true
+          rename: true,
+          // 单独启用 cdn
+          enableCdn: false
         },
         refreshSTSTokenInterval: 300 * 1000,
         rootPath: '',
+        // 启用 cdn
+        enableCdn: false,
+        // cdn 域名，enableCdn 设为 true 是，cdnUrl 必填
+        cdnUrl: '',
+        // 获取配置信息
         getConfig: function getConfig() {},
+        // 获取 stsToken
         getToken: function getToken() {}
       }, options);
       this.client = null;
@@ -293,8 +318,16 @@
             var _config,
                 _this2 = this;
 
-            client.put(this._generateName(name, (_config = config) === null || _config === void 0 ? void 0 : _config.rename), file, config).then(function (result) {
-              resolve(_this2._formatResult(result));
+            client.put(this._generateName({
+              name: name,
+              rename: (_config = config) === null || _config === void 0 ? void 0 : _config.rename
+            }), file, config).then(function (result) {
+              var _this2$opts, _config2;
+
+              resolve(_this2._formatResult({
+                result: result,
+                enableCdn: ((_this2$opts = _this2.opts) === null || _this2$opts === void 0 ? void 0 : _this2$opts.enableCdn) || ((_config2 = config) === null || _config2 === void 0 ? void 0 : _config2.enableCdn)
+              }));
             })["catch"](function (err) {
               reject(err);
             });
@@ -355,11 +388,19 @@
                   case 0:
                     _context3.next = 2;
                     return _this3._init(function (client) {
-                      var _config2,
+                      var _config3,
                           _this4 = this;
 
-                      client.multipartUpload(this._generateName(name, (_config2 = config) === null || _config2 === void 0 ? void 0 : _config2.rename), file, config).then(function (result) {
-                        resolve(_this4._formatResult(result));
+                      client.multipartUpload(this._generateName({
+                        name: name,
+                        rename: (_config3 = config) === null || _config3 === void 0 ? void 0 : _config3.rename
+                      }), file, config).then(function (result) {
+                        var _this4$opts, _config4;
+
+                        resolve(_this4._formatResult({
+                          result: result,
+                          enableCdn: ((_this4$opts = _this4.opts) === null || _this4$opts === void 0 ? void 0 : _this4$opts.enableCdn) || ((_config4 = config) === null || _config4 === void 0 ? void 0 : _config4.enableCdn)
+                        }));
                       })["catch"](function (err) {
                         reject(err);
                       });
@@ -403,7 +444,12 @@
                       var _this6 = this;
 
                       client.multipartUpload(name, file, deepMerge(config, this.opts.config)).then(function (result) {
-                        resolve(_this6._formatResult(result));
+                        var _this6$opts;
+
+                        resolve(_this6._formatResult({
+                          result: result,
+                          enableCdn: ((_this6$opts = _this6.opts) === null || _this6$opts === void 0 ? void 0 : _this6$opts.enableCdn) || (config === null || config === void 0 ? void 0 : config.enableCdn)
+                        }));
                       })["catch"](function (err) {
                         reject(err);
                       });
@@ -465,13 +511,15 @@
       /**
        * 格式化结果
        * @param {object} result
+       * @param {boolean} enableCdn
        * @private
        */
 
     }, {
       key: "_formatResult",
-      value: function _formatResult() {
-        var result = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      value: function _formatResult(_ref4) {
+        var result = _ref4.result,
+            enableCdn = _ref4.enableCdn;
         var _result$name = result.name,
             name = _result$name === void 0 ? '' : _result$name,
             _result$res = result.res,
@@ -485,11 +533,30 @@
           code: String(status),
           data: {
             name: name,
-            url: requestUrls && requestUrls.length ? requestUrls[0].split('?')[0] : '',
-            suffix: this._getSuffix(name),
+            url: this._formatUrl({
+              url: requestUrls && requestUrls.length ? requestUrls[0].split('?')[0] : '',
+              enableCdn: enableCdn
+            }),
+            suffix: getSuffix(name),
             size: size
           }
         };
+      }
+      /**
+       * 格式化 url
+       * @param {string} url
+       * @param {boolean} enableCdn 启用cdn
+       * @param {string} cndUrl
+       * @returns
+       */
+
+    }, {
+      key: "_formatUrl",
+      value: function _formatUrl(_ref5) {
+        var url = _ref5.url,
+            enableCdn = _ref5.enableCdn;
+        var cdnUrl = this.opts.cdnUrl;
+        return enableCdn ? url.replace(new RegExp('http(s)?://([^/]+)/', 'g'), cdnUrl.endsWith('/') ? cdnUrl : "".concat(cdnUrl, "/")) : url;
       }
       /**
        * 生成名称
@@ -501,16 +568,18 @@
 
     }, {
       key: "_generateName",
-      value: function _generateName(name) {
-        var rename = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+      value: function _generateName(_ref6) {
+        var name = _ref6.name,
+            _ref6$rename = _ref6.rename,
+            rename = _ref6$rename === void 0 ? true : _ref6$rename;
         if (!name) return '';
         var path = name.substring(0, name.lastIndexOf('/'));
-        var newName = rename ? "".concat(path, "/").concat(generateGUID()).concat(this._getSuffix(name)) : name;
-        return "".concat(this.opts.rootPath, "/").concat(newName).replace(new RegExp('\\/{2,}', 'g'), '/').replace(new RegExp('^\/', 'g'), '');
+        var newName = rename ? "".concat(path, "/").concat(generateGUID()).concat(getSuffix(name)) : name;
+        return formatPath("".concat(this.opts.rootPath, "/").concat(newName));
       }
       /**
        * 获取文件后缀
-       * @param {string} name 文件名 
+       * @param {string} name 文件名
        * @return {string}
        */
 
