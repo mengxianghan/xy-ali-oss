@@ -35,6 +35,8 @@ const store = new AliOSS(options)
 | config.headers | 否 | 上传公共配置信息，默认 {'Cache-Control': 'public'} |
 | refreshSTSTokenInterval | 否 | STSToken 刷新间隔，默认 300000ms|
 | rootPath | 否 | 根目录，默认为空 |
+| enableCdn | 否 | 启用 cdn，默认：false，如果 enableCdn 为 true，cdnUrl 必须传入 |
+| cdnUrl | 否 | cdn 域名，默认：空 |
 | getConfig | 否 | 动态获取配置信息，async为true时必填，返回一个 Promise 对象 |
 | getToken | 否 | 获取token，动态刷新token使用，返回一个 Promise 对象 |
 
