@@ -3,7 +3,7 @@ import { deepMerge, generateGUID, formatPath, getSuffix } from './utils'
 
 export default class AliOSS {
     constructor(options) {
-        this.opts = {
+        this.#opts = {
             // 是否异步获取配置信息，默认 false。如果为 true 时，getConfig 需要返回 Promise 对象
             async: false,
             // 通过阿里云控制台创建的access key
@@ -46,7 +46,9 @@ export default class AliOSS {
             getToken: function () {},
             ...options,
         }
-        this.client = null
+        this.#client = null
+
+        this.#init()
     }
 
     /**
@@ -54,14 +56,15 @@ export default class AliOSS {
      * @param {function} callback
      * @return {Promise<void>}
      */
-    async _init(callback) {
+    async #init() {
         try {
-            if (!this.client) {
-                const { async } = this.opts
-                if (async) {
-                    const asyncOptions = await this.opts.getConfig()
-                    this.opts = {
-                        ...this.opts,
+            if (!this.#client) {
+                if (this.#opts.async) {
+                    const asyncOptions = await this.#opts.getConfig().catch((err) => {
+                        throw new Error(err)
+                    })
+                    this.#opts = {
+                        ...this.#opts,
                         ...(asyncOptions || {}),
                     }
                 }
@@ -78,8 +81,8 @@ export default class AliOSS {
                     secure,
                     timeout,
                     getToken,
-                } = this.opts
-                this.client = new OSS({
+                } = this.#opts
+                this.#client = new OSS({
                     accessKeyId,
                     accessKeySecret,
                     stsToken,
@@ -94,11 +97,8 @@ export default class AliOSS {
                     refreshSTSToken: getToken,
                 })
             }
-            if (['[object Function]', '[object AsyncFunction]'].includes(Object.prototype.toString.call(callback))) {
-                callback.call(this, this.client)
-            }
         } catch (err) {
-            console.error(err.message)
+            console.error(err)
         }
     }
 
@@ -110,23 +110,31 @@ export default class AliOSS {
      * @return {Promise<unknown>}
      */
     upload(name, file, config = {}) {
-        config = deepMerge(this.opts.config, config)
         return new Promise((resolve, reject) => {
-            this._init(function (client) {
-                client
-                    .put(this._generateName({ name, rename: config?.rename }), file, config)
-                    .then((result) => {
-                        resolve(
-                            this._formatResult({
-                                result,
-                                enableCdn: this.opts?.enableCdn || config?.enableCdn,
-                            })
-                        )
-                    })
-                    .catch((err) => {
-                        reject(err)
-                    })
-            })
+            try {
+                ;(async () => {
+                    if (!this.#client) {
+                        await this.#init()
+                    }
+                    config = deepMerge(this.#opts.config, config)
+                    this.#client
+                        .put(this.#generateName({ name, rename: config?.rename }), file, config)
+                        .then((result) => {
+                            resolve(
+                                this.#formatResult({
+                                    result,
+                                    enableCdn: this.opts?.enableCdn || config?.enableCdn,
+                                })
+                            )
+                        })
+                        .catch((err) => {
+                            throw new Error(err)
+                        })
+                })()
+            } catch (error) {
+                reject()
+                console.error(error)
+            }
         })
     }
 
@@ -134,9 +142,10 @@ export default class AliOSS {
      * 取消
      */
     async cancel() {
-        await this._init(function (client) {
-            client.cancel()
-        })
+        if (!this.#client) {
+            await this.#init()
+        }
+        await this.#client.cancel()
     }
 
     /**
@@ -147,23 +156,31 @@ export default class AliOSS {
      * @return {Promise<unknown>}
      */
     multipartUpload(name, file, config = {}) {
-        config = deepMerge(this.opts.config, config)
         return new Promise(async (resolve, reject) => {
-            await this._init(function (client) {
-                client
-                    .multipartUpload(this._generateName({ name, rename: config?.rename }), file, config)
-                    .then((result) => {
-                        resolve(
-                            this._formatResult({
-                                result,
-                                enableCdn: this.opts?.enableCdn || config?.enableCdn,
-                            })
-                        )
-                    })
-                    .catch((err) => {
-                        reject(err)
-                    })
-            })
+            try {
+                ;(async () => {
+                    if (!this.#client) {
+                        await this.#init()
+                    }
+                    config = deepMerge(this.opts.config, config)
+                    this.#client
+                        .multipartUpload(this.#generateName({ name, rename: config?.rename }), file, config)
+                        .then((result) => {
+                            resolve(
+                                this.#formatResult({
+                                    result,
+                                    enableCdn: this.opts?.enableCdn || config?.enableCdn,
+                                })
+                            )
+                        })
+                        .catch((err) => {
+                            throw new Error(err)
+                        })
+                })()
+            } catch (error) {
+                reject()
+                console.error(error)
+            }
         })
     }
 
@@ -176,21 +193,29 @@ export default class AliOSS {
      */
     resumeMultipartUpload(name, file, config = {}) {
         return new Promise(async (resolve, reject) => {
-            await this._init(function (client) {
-                client
-                    .multipartUpload(name, file, deepMerge(config, this.opts.config))
-                    .then((result) => {
-                        resolve(
-                            this._formatResult({
-                                result,
-                                enableCdn: this.opts?.enableCdn || config?.enableCdn,
-                            })
-                        )
-                    })
-                    .catch((err) => {
-                        reject(err)
-                    })
-            })
+            try {
+                ;(async () => {
+                    if (!this.#client) {
+                        await this.#init()
+                    }
+                    this.#client
+                        .multipartUpload(name, file, deepMerge(config, this.opts.config))
+                        .then((result) => {
+                            resolve(
+                                this.#formatResult({
+                                    result,
+                                    enableCdn: this.opts?.enableCdn || config?.enableCdn,
+                                })
+                            )
+                        })
+                        .catch((err) => {
+                            throw new Error(err)
+                        })
+                })()
+            } catch (error) {
+                reject()
+                console.error(error)
+            }
         })
     }
 
@@ -202,16 +227,22 @@ export default class AliOSS {
      */
     abortMultipartUpload(name, uploadId) {
         return new Promise(async (resolve, reject) => {
-            await this._init(function (client) {
-                client
+            try {
+                if (!this.#client) {
+                    await this.#init()
+                }
+                this.#client
                     .abortMultipartUpload(name, uploadId)
                     .then((result) => {
                         resolve(result)
                     })
                     .catch((err) => {
-                        reject(err)
+                        throw new Error(err)
                     })
-            })
+            } catch (error) {
+                reject()
+                console.error(error)
+            }
         })
     }
 
@@ -221,16 +252,16 @@ export default class AliOSS {
      * @param {boolean} enableCdn
      * @private
      */
-    _formatResult({ result, enableCdn }) {
+    #formatResult({ result, enableCdn }) {
         const {
             name = '',
             res: { status = 500, size = 0, requestUrls = [] },
         } = result
         return {
-            code: String(status),
+            code: status,
             data: {
                 name,
-                url: this._formatUrl({
+                url: this.#formatUrl({
                     url: requestUrls && requestUrls.length ? requestUrls[0].split('?')[0] : '',
                     enableCdn,
                 }),
@@ -247,7 +278,7 @@ export default class AliOSS {
      * @param {string} cndUrl
      * @returns
      */
-    _formatUrl({ url, enableCdn }) {
+    #formatUrl({ url, enableCdn }) {
         const { cdnUrl } = this.opts
         return enableCdn
             ? url.replace(new RegExp('http(s)?://([^/]+)/', 'g'), cdnUrl.endsWith('/') ? cdnUrl : `${cdnUrl}/`)
@@ -261,19 +292,10 @@ export default class AliOSS {
      * @return {string}
      * @private
      */
-    _generateName({ name, rename = true }) {
+    #generateName({ name, rename = true }) {
         if (!name) return ''
         const path = name.substring(0, name.lastIndexOf('/'))
         const newName = rename ? `${path}/${generateGUID()}${getSuffix(name)}` : name
         return formatPath(`${this.opts.rootPath}/${newName}`)
-    }
-
-    /**
-     * 获取文件后缀
-     * @param {string} name 文件名
-     * @return {string}
-     */
-    _getSuffix(name) {
-        return name.substring(name.lastIndexOf('.'), name.length)
     }
 }
