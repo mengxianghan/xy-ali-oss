@@ -1,18 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1">
-    <title>example</title>
-</head>
-<body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>example</title>
+    </head>
+    <body>
+        <button id="init">初始化</button>
+        <h2>简单上传</h2>
+        <input id="putFile" type="file" />
+        <button id="put">上传</button>
 
-<script src="//cdn.jsdelivr.net/npm/ali-oss@6.15.2/dist/aliyun-oss-sdk.min.js"></script>
-<script src="../dist/index.umd.js"></script>
-<script>
-    const oss = new AliOSS()
-    console.log(oss)
-</script>
-</body>
+        <h2>分片上传</h2>
+        <input id="uploadFile" type="file" />
+        <button id="upload">上传</button>
+        <button id="abort">取消</button>
+        <button id="pause">暂停</button>
+        <button id="resume">恢复上传</button>
+        <span>上传进度：<span id="percent">0%</span></span>
+
+        <script src="../node_modules/ali-oss/dist/aliyun-oss-sdk.min.js"></script>
+        <script src="../dist/index.min.js"></script>
+        <script>
+            let oss = null
+            function init() {
+                oss = new XYAliOSS({
+                    accessKeyId: 'LTAI5tPdYmiX31tj5cZdv258',
+                    accessKeySecret: 'TaAMfQ4EfBG80oc38I596obYLlI4Vd',
+                    bucket: 'xuanyu-cdn',
+                    region: 'oss-cn-beijing',
+                    // cdnUrl: 'http://example.com',
+
+                    async: false,
+                    getOptions: async () => {
+                        return new Promise((resolve) => {
+                            fetch(
+                                'https://cloud-gateway-test.53zaixian.com/file-center-api/credentials/getOssUploadToken',
+                                {
+                                    headers: {
+                                        accept: 'application/json, text/plain, */*',
+                                        'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
+                                        'auth-token':
+                                            'Bearer eyJhbGciOiJIUzUxMiJ9.eyJsYXN0TG9naW5UaW1lIjoiMjAyMy0wNC0yMyAyMToxOTo1MyIsImV4cCI6MTY4Mjg2MDc5NSwicGhvbmUiOiIxODYxMDQ3NzQ3MiIsInV1aWQiOjE0NTgzMzU0ODc2Njk5Mjc5MzcsImVtYWlsIjoiIiwibG9naW5OYW1lIjoiMTg2MTA0Nzc0NzIifQ.K0EeRlQjw0lMpsQEiQLOt5lf0VBEUDIKXYxNclNJLjbkVB8w0tHJggQCc2PhR1PaQlIfDH_EOOM4oZSmaAbSJA',
+                                        'cache-control': 'no-cache',
+                                        companyid: '1535233412479131649',
+                                        'content-type': 'application/json',
+                                        pragma: 'no-cache',
+                                        'sec-ch-ua':
+                                            '"Chromium";v="112", "Microsoft Edge";v="112", "Not:A-Brand";v="99"',
+                                        'sec-ch-ua-mobile': '?0',
+                                        'sec-ch-ua-platform': '"Windows"',
+                                        'sec-fetch-dest': 'empty',
+                                        'sec-fetch-mode': 'cors',
+                                        'sec-fetch-site': 'same-site',
+                                    },
+                                    referrer: 'https://chuban-test.53zaixian.com/',
+                                    referrerPolicy: 'strict-origin-when-cross-origin',
+                                    body: '{"server":"publish-test","serverBiz":"zaixian"}',
+                                    method: 'POST',
+                                    mode: 'cors',
+                                    credentials: 'omit',
+                                }
+                            )
+                                .then((res) => {
+                                    return res.json()
+                                })
+                                .then((res) => {
+                                    const {
+                                        accessKeyId,
+                                        accessKeySecret,
+                                        securityToken,
+                                        bucket,
+                                        cname,
+                                        endpoint,
+                                        rootPath,
+                                        // cdnUrl,
+                                    } = res.data
+                                    resolve({
+                                        accessKeyId,
+                                        accessKeySecret,
+                                        stsToken: securityToken,
+                                        bucket,
+                                        cname: false,
+                                        endpoint: 'http://example.com',
+                                        rootPath,
+                                        // enableCdn: !!cdnUrl,
+                                        // cdnUrl,
+                                    })
+                                })
+                        })
+                    },
+                })
+            }
+
+            // 初始化
+            const initBtn = document.getElementById('init')
+            initBtn.addEventListener('click', () => {
+                init()
+            })
+
+            // 简单上传
+            const putBtn = document.getElementById('put')
+            putBtn.addEventListener('click', async () => {
+                const file = document.getElementById('putFile').files[0]
+                const result = await oss.upload(`test/${file.name}`, file, {
+                    headers: {
+                        'Content-Type': file.type,
+                    },
+                })
+                console.log(result)
+            })
+
+            // 分片上传
+            const uploadBtn = document.getElementById('upload')
+            const abortBtn = document.getElementById('abort')
+            const pauseBtn = document.getElementById('pause')
+            const resumeBtn = document.getElementById('resume')
+            let abortCheckpoint = null
+
+            uploadBtn.addEventListener('click', async () => {
+                const file = document.getElementById('uploadFile').files[0]
+                const result = await oss
+                    .multipartUpload(`test/${file.name}`, file, {
+                        progress: (p, cpt, res) => {
+                            console.log(p, cpt, res)
+                            abortCheckpoint = cpt
+                            document.getElementById('percent').innerHTML = `${(p * 100).toFixed(2)}%`
+                        },
+                    })
+                    .catch(() => {})
+                console.log(result)
+            })
+
+            // 取消
+            abortBtn.addEventListener('click', () => {
+                oss.store.abortMultipartUpload(abortCheckpoint.name, abortCheckpoint.uploadId)
+            })
+
+            // 暂停
+            pauseBtn.addEventListener('click', () => {
+                oss.store.cancel()
+            })
+
+            // 继续上传
+            resumeBtn.addEventListener('click', async () => {
+                const result = await oss
+                    .resumeMultipartUpload(abortCheckpoint.name, abortCheckpoint.file, {
+                        checkpoint: abortCheckpoint,
+                        progress: (p, cpt, res) => {
+                            console.log(p, cpt, res)
+                            abortCheckpoint = cpt
+                            document.getElementById('percent').innerHTML = `${(p * 100).toFixed(2)}%`
+                        },
+                    })
+                    .catch((err) => {
+                        console.log(err)
+                    })
+                console.log(result)
+            })
+        </script>
+    </body>
 </html>
