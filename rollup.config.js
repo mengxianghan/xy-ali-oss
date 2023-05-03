@@ -3,6 +3,8 @@ import babel from '@rollup/plugin-babel'
 import clear from 'rollup-plugin-clear'
 import terser from '@rollup/plugin-terser'
 
+const name = 'XYAliOSS'
+
 export default {
     input: 'src/index.js',
     output: [
@@ -18,18 +20,14 @@ export default {
         {
             file: 'dist/index.js',
             format: 'umd',
-            name: 'XYAliOSS',
-            globals: {
-                'ali-oss': 'OSS',
-            },
+            name,
+            globals: { 'ali-oss': 'OSS' },
         },
         {
             file: 'dist/index.min.js',
             format: 'umd',
-            name: 'XYAliOSS',
-            globals: {
-                'ali-oss': 'OSS',
-            },
+            name,
+            globals: { 'ali-oss': 'OSS' },
             plugins: [terser()],
         },
     ],

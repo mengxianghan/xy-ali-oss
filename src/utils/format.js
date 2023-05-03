@@ -27,6 +27,6 @@ export function formatResponse({ data, cdnUrl, cname }) {
         url,
         name,
         suffix,
-        res,
+        meta: res,
     }
 }

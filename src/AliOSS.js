@@ -1,52 +1,61 @@
 import { generateFilename } from './utils/generate'
-import { deepMerge } from './utils'
+import { deepMerge, guid } from './utils'
 import { formatResponse } from './utils/format'
+import Event from './utils/event'
+import OSS from 'ali-oss'
 
-class AliOSS {
+export default class AliOSS {
     #opts
     #instance = null
+    #event
 
     constructor(options) {
+        this.#event = new Event()
         this.#opts = {
             async: false,
+            rename: true,
             rootPath: '',
             cdnUrl: '',
             refreshSTSTokenInterval: 300000,
             config: {
                 headers: { 'Cache-Control': 'public' },
-                rename: true,
             },
             refreshSTSToken: () => {},
             getOptions: () => {},
             ...options,
         }
-
-        this.#init()
-    }
-
-    get store() {
-        return this.#instance
     }
 
     /**
-     * 初始化
-     * @returns {Promise<void>}
+     * 获取储存
+     * @returns {Promise}
      */
-    async #init() {
-        if (this.#instance) return
+    getStore() {
+        return new Promise((resolve) => {
+            ;(async () => {
+                if (this.#instance) {
+                    resolve(this.#instance)
+                    return
+                }
 
-        if (this.#opts.async) {
-            const options = await this.#opts.getOptions().catch(() => {})
-            this.#opts = {
-                ...this.#opts,
-                ...(options || {}),
-            }
-        }
+                if (this.#event.length - 1) return
 
-        const { async, getOptions, ...options } = this.#opts
+                if (this.#opts.async) {
+                    const options = await this.#opts.getOptions().catch(() => {})
+                    this.#opts = {
+                        ...this.#opts,
+                        ...(options || {}),
+                    }
+                }
 
-        this.#instance = new OSS({
-            ...options,
+                const { async, getOptions, ...options } = this.#opts
+
+                this.#instance = new OSS({
+                    ...options,
+                })
+
+                resolve(this.#instance)
+            })()
         })
     }
 
@@ -55,18 +64,18 @@ class AliOSS {
      * @param {string} filename
      * @param {File | Blob | Buffer} data
      * @param {object} config
-     * @returns {Promise<unknown>}
+     * @returns {Promise}
      */
-    upload(filename, data, config = {}) {
+    put(filename, data, config = {}) {
         return new Promise((resolve, reject) => {
-            try {
-                ;(async () => {
+            this.#event.on(guid(), async () => {
+                try {
                     config = deepMerge(this.#opts?.config || {}, config)
                     const result = await this.#instance
                         .put(
                             generateFilename({
                                 filename,
-                                rename: config?.rename,
+                                rename: this.#opts?.rename || config?.rename,
                                 rootPath: this.#opts?.rootPath,
                             }),
                             data,
@@ -82,10 +91,11 @@ class AliOSS {
                             cname: this.#opts.cname,
                         })
                     )
-                })()
-            } catch (error) {
-                reject(error)
-            }
+                } catch (error) {
+                    reject(error)
+                }
+            })
+            this.#init()
         })
     }
 
@@ -98,14 +108,14 @@ class AliOSS {
      */
     multipartUpload(filename, data, config = {}) {
         return new Promise((resolve, reject) => {
-            try {
-                ;(async () => {
+            this.#event.on(guid(), async () => {
+                try {
                     config = deepMerge(this.#opts?.config || {}, config)
                     const result = await this.#instance
                         .multipartUpload(
                             generateFilename({
                                 filename,
-                                rename: config?.rename,
+                                rename: this.#opts?.rename || config?.rename,
                                 rootPath: this.#opts?.rootPath,
                             }),
                             data,
@@ -121,10 +131,11 @@ class AliOSS {
                             cname: this.#opts.cname,
                         })
                     )
-                })()
-            } catch (error) {
-                reject(error.message)
-            }
+                } catch (error) {
+                    reject(error.message)
+                }
+            })
+            this.#init()
         })
     }
 
@@ -138,6 +149,24 @@ class AliOSS {
     resumeMultipartUpload(filename, data, config) {
         return this.multipartUpload(filename, data, config)
     }
-}
 
-export default AliOSS
+    /**
+     * @returns {Promise<void>}
+     */
+    #init() {
+        return new Promise((resolve) => {
+            ;(async () => {
+                if (this.#instance) {
+                    this.#event.emit()
+                    resolve(this.#instance)
+                    return
+                }
+
+                await this.getStore()
+
+                this.#event.emit()
+                resolve(this.#instance)
+            })()
+        })
+    }
+}

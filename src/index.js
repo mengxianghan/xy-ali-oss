@@ -1,2 +1,3 @@
-import AliOSS from './AliOSS'
+import AliOSS from './alioss'
+
 export default AliOSS
