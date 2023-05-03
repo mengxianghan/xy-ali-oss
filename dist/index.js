@@ -1,8 +1,12 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-  typeof define === 'function' && define.amd ? define(factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.XYAliOSS = factory());
-})(this, (function () { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('ali-oss')) :
+  typeof define === 'function' && define.amd ? define(['ali-oss'], factory) :
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.XYAliOSS = factory(global.OSS));
+})(this, (function (OSS) { 'use strict';
+
+  function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+
+  var OSS__default = /*#__PURE__*/_interopDefaultLegacy(OSS);
 
   function ownKeys(object, enumerableOnly) {
     var keys = Object.keys(object);
@@ -505,20 +509,20 @@
   /**
    * 格式化响应值
    * @param {object} data
-   * @param {string} cdnUrl
-   * @param {boolean} cname 是否支持自定义域名，优先级比 cdnUrl 高
+   * @param {boolean} enableCdn 启用 cdn 域名
+   * @param {string} cdnUrl cdn 域名
    * @returns {object}
    */
   function formatResponse(_ref) {
     var _requestUrls$;
     var data = _ref.data,
-      cdnUrl = _ref.cdnUrl,
-      cname = _ref.cname;
+      enableCdn = _ref.enableCdn,
+      cdnUrl = _ref.cdnUrl;
     var name = data.name,
       res = data.res;
     var requestUrls = res.requestUrls;
     var requestUrl = (requestUrls === null || requestUrls === void 0 ? void 0 : (_requestUrls$ = requestUrls[0]) === null || _requestUrls$ === void 0 ? void 0 : _requestUrls$.replace(/\?.*/gi, '')) || '';
-    var url = cname ? requestUrl : generateUrl({
+    var url = enableCdn ? requestUrl : generateUrl({
       url: requestUrl,
       cdnUrl: cdnUrl
     });
@@ -527,7 +531,7 @@
       url: url,
       name: name,
       suffix: suffix,
-      res: res
+      meta: res
     };
   }
 
@@ -612,15 +616,53 @@
     return formatPath("".concat(rootPath, "/").concat(newFilename));
   }
 
+  var _subscribes = /*#__PURE__*/new WeakMap();
+  var Event = /*#__PURE__*/function () {
+    function Event() {
+      _classCallCheck(this, Event);
+      _classPrivateFieldInitSpec(this, _subscribes, {
+        writable: true,
+        value: void 0
+      });
+      _classPrivateFieldSet(this, _subscribes, new Map());
+    }
+    _createClass(Event, [{
+      key: "on",
+      value: function on(key, fn) {
+        _classPrivateFieldGet(this, _subscribes).set(key, fn);
+      }
+    }, {
+      key: "emit",
+      value: function emit() {
+        var _this = this;
+        _classPrivateFieldGet(this, _subscribes).forEach(function (fn, key) {
+          fn();
+          _classPrivateFieldGet(_this, _subscribes)["delete"](key);
+        });
+      }
+    }, {
+      key: "off",
+      value: function off() {
+        _classPrivateFieldGet(this, _subscribes).clear();
+      }
+    }, {
+      key: "length",
+      get: function get() {
+        return _classPrivateFieldGet(this, _subscribes).size;
+      }
+    }]);
+    return Event;
+  }();
+
   var _excluded = ["async", "getOptions"];
   var _opts = /*#__PURE__*/new WeakMap();
   var _instance = /*#__PURE__*/new WeakMap();
+  var _event = /*#__PURE__*/new WeakMap();
   var _init = /*#__PURE__*/new WeakSet();
   var AliOSS = /*#__PURE__*/function () {
-    function AliOSS(_options) {
+    function AliOSS(options) {
       _classCallCheck(this, AliOSS);
       /**
-       * 初始化
        * @returns {Promise<void>}
        */
       _classPrivateMethodInitSpec(this, _init);
@@ -632,74 +674,125 @@
         writable: true,
         value: null
       });
+      _classPrivateFieldInitSpec(this, _event, {
+        writable: true,
+        value: void 0
+      });
+      _classPrivateFieldSet(this, _event, new Event());
       _classPrivateFieldSet(this, _opts, _objectSpread2({
         async: false,
+        rename: true,
         rootPath: '',
+        enableCdn: false,
         cdnUrl: '',
         refreshSTSTokenInterval: 300000,
         config: {
           headers: {
             'Cache-Control': 'public'
-          },
-          rename: true
+          }
         },
         refreshSTSToken: function refreshSTSToken() {},
         getOptions: function getOptions() {}
-      }, _options));
-      _classPrivateMethodGet(this, _init, _init2).call(this);
+      }, options));
     }
+
+    /**
+     * 获取储存
+     * @returns {Promise}
+     */
     _createClass(AliOSS, [{
-      key: "store",
-      get: function get() {
-        return _classPrivateFieldGet(this, _instance);
+      key: "getStore",
+      value: function getStore() {
+        var _this = this;
+        return new Promise(function (resolve) {
+          _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
+            var _options, _classPrivateFieldGet2, options;
+            return _regeneratorRuntime().wrap(function _callee$(_context) {
+              while (1) switch (_context.prev = _context.next) {
+                case 0:
+                  if (!_classPrivateFieldGet(_this, _instance)) {
+                    _context.next = 3;
+                    break;
+                  }
+                  resolve(_classPrivateFieldGet(_this, _instance));
+                  return _context.abrupt("return");
+                case 3:
+                  if (!(_classPrivateFieldGet(_this, _event).length - 1)) {
+                    _context.next = 5;
+                    break;
+                  }
+                  return _context.abrupt("return");
+                case 5:
+                  if (!_classPrivateFieldGet(_this, _opts).async) {
+                    _context.next = 10;
+                    break;
+                  }
+                  _context.next = 8;
+                  return _classPrivateFieldGet(_this, _opts).getOptions()["catch"](function () {});
+                case 8:
+                  _options = _context.sent;
+                  _classPrivateFieldSet(_this, _opts, _objectSpread2(_objectSpread2({}, _classPrivateFieldGet(_this, _opts)), _options || {}));
+                case 10:
+                  _classPrivateFieldGet2 = _classPrivateFieldGet(_this, _opts), options = _objectWithoutProperties(_classPrivateFieldGet2, _excluded);
+                  _classPrivateFieldSet(_this, _instance, new OSS__default["default"](_objectSpread2({}, options)));
+                  resolve(_classPrivateFieldGet(_this, _instance));
+                case 13:
+                case "end":
+                  return _context.stop();
+              }
+            }, _callee);
+          }))();
+        });
       }
-    }, {
-      key: "upload",
-      value:
+
       /**
        * 上传
        * @param {string} filename
        * @param {File | Blob | Buffer} data
        * @param {object} config
-       * @returns {Promise<unknown>}
+       * @returns {Promise}
        */
-      function upload(filename, data) {
-        var _this = this;
+    }, {
+      key: "put",
+      value: function put(filename, data) {
+        var _this2 = this;
         var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
         return new Promise(function (resolve, reject) {
-          try {
-            ;
-            _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
-              var _classPrivateFieldGet2, _config, _classPrivateFieldGet3, _classPrivateFieldGet4;
-              var result;
-              return _regeneratorRuntime().wrap(function _callee$(_context) {
-                while (1) switch (_context.prev = _context.next) {
-                  case 0:
-                    config = deepMerge(((_classPrivateFieldGet2 = _classPrivateFieldGet(_this, _opts)) === null || _classPrivateFieldGet2 === void 0 ? void 0 : _classPrivateFieldGet2.config) || {}, config);
-                    _context.next = 3;
-                    return _classPrivateFieldGet(_this, _instance).put(generateFilename({
-                      filename: filename,
-                      rename: (_config = config) === null || _config === void 0 ? void 0 : _config.rename,
-                      rootPath: (_classPrivateFieldGet3 = _classPrivateFieldGet(_this, _opts)) === null || _classPrivateFieldGet3 === void 0 ? void 0 : _classPrivateFieldGet3.rootPath
-                    }), data, config)["catch"](function (err) {
-                      throw err;
-                    });
-                  case 3:
-                    result = _context.sent;
-                    resolve(formatResponse({
-                      data: result,
-                      cdnUrl: (_classPrivateFieldGet4 = _classPrivateFieldGet(_this, _opts)) === null || _classPrivateFieldGet4 === void 0 ? void 0 : _classPrivateFieldGet4.cdnUrl,
-                      cname: _classPrivateFieldGet(_this, _opts).cname
-                    }));
-                  case 5:
-                  case "end":
-                    return _context.stop();
-                }
-              }, _callee);
-            }))();
-          } catch (error) {
-            reject(error);
-          }
+          _classPrivateFieldGet(_this2, _event).on(guid(), /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
+            var _classPrivateFieldGet3, _classPrivateFieldGet4, _config, _classPrivateFieldGet5, _classPrivateFieldGet6, _classPrivateFieldGet7, result;
+            return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+              while (1) switch (_context2.prev = _context2.next) {
+                case 0:
+                  _context2.prev = 0;
+                  config = deepMerge(((_classPrivateFieldGet3 = _classPrivateFieldGet(_this2, _opts)) === null || _classPrivateFieldGet3 === void 0 ? void 0 : _classPrivateFieldGet3.config) || {}, config);
+                  _context2.next = 4;
+                  return _classPrivateFieldGet(_this2, _instance).put(generateFilename({
+                    filename: filename,
+                    rename: ((_classPrivateFieldGet4 = _classPrivateFieldGet(_this2, _opts)) === null || _classPrivateFieldGet4 === void 0 ? void 0 : _classPrivateFieldGet4.rename) || ((_config = config) === null || _config === void 0 ? void 0 : _config.rename),
+                    rootPath: (_classPrivateFieldGet5 = _classPrivateFieldGet(_this2, _opts)) === null || _classPrivateFieldGet5 === void 0 ? void 0 : _classPrivateFieldGet5.rootPath
+                  }), data, config)["catch"](function (err) {
+                    throw err;
+                  });
+                case 4:
+                  result = _context2.sent;
+                  resolve(formatResponse({
+                    data: result,
+                    enableCdn: (_classPrivateFieldGet6 = _classPrivateFieldGet(_this2, _opts)) === null || _classPrivateFieldGet6 === void 0 ? void 0 : _classPrivateFieldGet6.enableCdn,
+                    cdnUrl: (_classPrivateFieldGet7 = _classPrivateFieldGet(_this2, _opts)) === null || _classPrivateFieldGet7 === void 0 ? void 0 : _classPrivateFieldGet7.cdnUrl
+                  }));
+                  _context2.next = 11;
+                  break;
+                case 8:
+                  _context2.prev = 8;
+                  _context2.t0 = _context2["catch"](0);
+                  reject(_context2.t0);
+                case 11:
+                case "end":
+                  return _context2.stop();
+              }
+            }, _callee2, null, [[0, 8]]);
+          })));
+          _classPrivateMethodGet(_this2, _init, _init2).call(_this2);
         });
       }
 
@@ -713,42 +806,44 @@
     }, {
       key: "multipartUpload",
       value: function multipartUpload(filename, data) {
-        var _this2 = this;
+        var _this3 = this;
         var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
         return new Promise(function (resolve, reject) {
-          try {
-            ;
-            _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
-              var _classPrivateFieldGet5, _config2, _classPrivateFieldGet6, _classPrivateFieldGet7;
-              var result;
-              return _regeneratorRuntime().wrap(function _callee2$(_context2) {
-                while (1) switch (_context2.prev = _context2.next) {
-                  case 0:
-                    config = deepMerge(((_classPrivateFieldGet5 = _classPrivateFieldGet(_this2, _opts)) === null || _classPrivateFieldGet5 === void 0 ? void 0 : _classPrivateFieldGet5.config) || {}, config);
-                    _context2.next = 3;
-                    return _classPrivateFieldGet(_this2, _instance).multipartUpload(generateFilename({
-                      filename: filename,
-                      rename: (_config2 = config) === null || _config2 === void 0 ? void 0 : _config2.rename,
-                      rootPath: (_classPrivateFieldGet6 = _classPrivateFieldGet(_this2, _opts)) === null || _classPrivateFieldGet6 === void 0 ? void 0 : _classPrivateFieldGet6.rootPath
-                    }), data, config)["catch"](function (err) {
-                      throw err;
-                    });
-                  case 3:
-                    result = _context2.sent;
-                    resolve(formatResponse({
-                      data: result,
-                      cdnUrl: (_classPrivateFieldGet7 = _classPrivateFieldGet(_this2, _opts)) === null || _classPrivateFieldGet7 === void 0 ? void 0 : _classPrivateFieldGet7.cdnUrl,
-                      cname: _classPrivateFieldGet(_this2, _opts).cname
-                    }));
-                  case 5:
-                  case "end":
-                    return _context2.stop();
-                }
-              }, _callee2);
-            }))();
-          } catch (error) {
-            reject(error.message);
-          }
+          _classPrivateFieldGet(_this3, _event).on(guid(), /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
+            var _classPrivateFieldGet8, _classPrivateFieldGet9, _config2, _classPrivateFieldGet10, _classPrivateFieldGet11, result;
+            return _regeneratorRuntime().wrap(function _callee3$(_context3) {
+              while (1) switch (_context3.prev = _context3.next) {
+                case 0:
+                  _context3.prev = 0;
+                  config = deepMerge(((_classPrivateFieldGet8 = _classPrivateFieldGet(_this3, _opts)) === null || _classPrivateFieldGet8 === void 0 ? void 0 : _classPrivateFieldGet8.config) || {}, config);
+                  _context3.next = 4;
+                  return _classPrivateFieldGet(_this3, _instance).multipartUpload(generateFilename({
+                    filename: filename,
+                    rename: ((_classPrivateFieldGet9 = _classPrivateFieldGet(_this3, _opts)) === null || _classPrivateFieldGet9 === void 0 ? void 0 : _classPrivateFieldGet9.rename) || ((_config2 = config) === null || _config2 === void 0 ? void 0 : _config2.rename),
+                    rootPath: (_classPrivateFieldGet10 = _classPrivateFieldGet(_this3, _opts)) === null || _classPrivateFieldGet10 === void 0 ? void 0 : _classPrivateFieldGet10.rootPath
+                  }), data, config)["catch"](function (err) {
+                    throw err;
+                  });
+                case 4:
+                  result = _context3.sent;
+                  resolve(formatResponse({
+                    data: result,
+                    enableCdn: _classPrivateFieldGet(_this3, _opts).enableCdn,
+                    cdnUrl: (_classPrivateFieldGet11 = _classPrivateFieldGet(_this3, _opts)) === null || _classPrivateFieldGet11 === void 0 ? void 0 : _classPrivateFieldGet11.cdnUrl
+                  }));
+                  _context3.next = 11;
+                  break;
+                case 8:
+                  _context3.prev = 8;
+                  _context3.t0 = _context3["catch"](0);
+                  reject(_context3.t0.message);
+                case 11:
+                case "end":
+                  return _context3.stop();
+              }
+            }, _callee3, null, [[0, 8]]);
+          })));
+          _classPrivateMethodGet(_this3, _init, _init2).call(_this3);
         });
       }
 
@@ -768,39 +863,32 @@
     return AliOSS;
   }();
   function _init2() {
-    return _init3.apply(this, arguments);
-  }
-  function _init3() {
-    _init3 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
-      var _options2, _classPrivateFieldGet8, options;
-      return _regeneratorRuntime().wrap(function _callee3$(_context3) {
-        while (1) switch (_context3.prev = _context3.next) {
-          case 0:
-            if (!_classPrivateFieldGet(this, _instance)) {
-              _context3.next = 2;
-              break;
-            }
-            return _context3.abrupt("return");
-          case 2:
-            if (!_classPrivateFieldGet(this, _opts).async) {
-              _context3.next = 7;
-              break;
-            }
-            _context3.next = 5;
-            return _classPrivateFieldGet(this, _opts).getOptions()["catch"](function () {});
-          case 5:
-            _options2 = _context3.sent;
-            _classPrivateFieldSet(this, _opts, _objectSpread2(_objectSpread2({}, _classPrivateFieldGet(this, _opts)), _options2 || {}));
-          case 7:
-            _classPrivateFieldGet8 = _classPrivateFieldGet(this, _opts), options = _objectWithoutProperties(_classPrivateFieldGet8, _excluded);
-            _classPrivateFieldSet(this, _instance, new OSS(_objectSpread2({}, options)));
-          case 9:
-          case "end":
-            return _context3.stop();
-        }
-      }, _callee3, this);
-    }));
-    return _init3.apply(this, arguments);
+    var _this4 = this;
+    return new Promise(function (resolve) {
+      _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee4() {
+        return _regeneratorRuntime().wrap(function _callee4$(_context4) {
+          while (1) switch (_context4.prev = _context4.next) {
+            case 0:
+              if (!_classPrivateFieldGet(_this4, _instance)) {
+                _context4.next = 4;
+                break;
+              }
+              _classPrivateFieldGet(_this4, _event).emit();
+              resolve(_classPrivateFieldGet(_this4, _instance));
+              return _context4.abrupt("return");
+            case 4:
+              _context4.next = 6;
+              return _this4.getStore();
+            case 6:
+              _classPrivateFieldGet(_this4, _event).emit();
+              resolve(_classPrivateFieldGet(_this4, _instance));
+            case 8:
+            case "end":
+              return _context4.stop();
+          }
+        }, _callee4);
+      }))();
+    });
   }
 
   return AliOSS;
