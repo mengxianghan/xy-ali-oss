@@ -13,15 +13,15 @@ export function formatPath(path) {
 /**
  * 格式化响应值
  * @param {object} data
- * @param {string} cdnUrl
- * @param {boolean} cname 是否支持自定义域名，优先级比 cdnUrl 高
+ * @param {boolean} enableCdn 启用 cdn 域名
+ * @param {string} cdnUrl cdn 域名
  * @returns {object}
  */
-export function formatResponse({ data, cdnUrl, cname }) {
+export function formatResponse({ data, enableCdn, cdnUrl }) {
     const { name, res } = data
     const { requestUrls } = res
     const requestUrl = requestUrls?.[0]?.replace(/\?.*/gi, '') || ''
-    const url = cname ? requestUrl : generateUrl({ url: requestUrl, cdnUrl })
+    const url = enableCdn ? requestUrl : generateUrl({ url: requestUrl, cdnUrl })
     const suffix = getSuffix(url)
     return {
         url,

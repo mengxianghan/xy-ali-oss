@@ -15,6 +15,7 @@ export default class AliOSS {
             async: false,
             rename: true,
             rootPath: '',
+            enableCdn: false,
             cdnUrl: '',
             refreshSTSTokenInterval: 300000,
             config: {
@@ -87,8 +88,8 @@ export default class AliOSS {
                     resolve(
                         formatResponse({
                             data: result,
+                            enableCdn: this.#opts?.enableCdn,
                             cdnUrl: this.#opts?.cdnUrl,
-                            cname: this.#opts.cname,
                         })
                     )
                 } catch (error) {
@@ -127,8 +128,8 @@ export default class AliOSS {
                     resolve(
                         formatResponse({
                             data: result,
+                            enableCdn: this.#opts.enableCdn,
                             cdnUrl: this.#opts?.cdnUrl,
-                            cname: this.#opts.cname,
                         })
                     )
                 } catch (error) {
