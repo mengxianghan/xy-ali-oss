@@ -11,20 +11,24 @@ export default class AliOSS {
 
     constructor(options) {
         this.#event = new Event()
-        this.#opts = {
-            async: false,
-            rename: true,
-            rootPath: '',
-            enableCdn: false,
-            cdnUrl: '',
-            refreshSTSTokenInterval: 300000,
-            config: {
-                headers: { 'Cache-Control': 'public' },
+        this.#opts = deepMerge(
+            {
+                async: false,
+                rootPath: '',
+                enableCdn: false,
+                rename: true,
+                cdnUrl: '',
+                refreshSTSTokenInterval: 300000,
+                config: {
+                    headers: {
+                        'Cache-Control': 'public',
+                    },
+                },
+                refreshSTSToken: () => {},
+                getOptions: () => {},
             },
-            refreshSTSToken: () => {},
-            getOptions: () => {},
-            ...options,
-        }
+            options
+        )
     }
 
     /**
@@ -72,11 +76,12 @@ export default class AliOSS {
             this.#event.on(guid(), async () => {
                 try {
                     config = deepMerge(this.#opts?.config || {}, config)
+                    const rename = config.hasOwnProperty('rename') ? config?.rename : this.#opts.rename
                     const result = await this.#instance
                         .put(
                             generateFilename({
                                 filename,
-                                rename: this.#opts?.rename || config?.rename,
+                                rename,
                                 rootPath: this.#opts?.rootPath,
                             }),
                             data,
@@ -112,11 +117,12 @@ export default class AliOSS {
             this.#event.on(guid(), async () => {
                 try {
                     config = deepMerge(this.#opts?.config || {}, config)
+                    const rename = config.hasOwnProperty('rename') ? config?.rename : this.#opts.rename
                     const result = await this.#instance
                         .multipartUpload(
                             generateFilename({
                                 filename,
-                                rename: this.#opts?.rename || config?.rename,
+                                rename,
                                 rootPath: this.#opts?.rootPath,
                             }),
                             data,

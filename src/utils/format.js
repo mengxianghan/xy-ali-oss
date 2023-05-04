@@ -19,14 +19,17 @@ export function formatPath(path) {
  */
 export function formatResponse({ data, enableCdn, cdnUrl }) {
     const { name, res } = data
-    const { requestUrls } = res
+    const { requestUrls, statusCode } = res
     const requestUrl = requestUrls?.[0]?.replace(/\?.*/gi, '') || ''
     const url = enableCdn ? requestUrl : generateUrl({ url: requestUrl, cdnUrl })
     const suffix = getSuffix(url)
     return {
-        url,
-        name,
-        suffix,
-        meta: res,
+        code: statusCode,
+        data: {
+            url,
+            name,
+            suffix,
+            meta: res,
+        },
     }
 }
