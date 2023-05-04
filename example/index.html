@@ -33,7 +33,7 @@
                 accessKeyId: '',
                 accessKeySecret: '',
                 bucket: '',
-                region: '',
+                region: 'oss-cn-beijing',
 
                 async: false,
                 getOptions: async () => {
@@ -73,18 +73,22 @@
                 const result = await oss
                     .multipartUpload(`test/${file.name}`, file, {
                         progress: (p, cpt, res) => {
-                            console.log(p, cpt, res)
                             abortCheckpoint = cpt
                             document.getElementById('percent').innerHTML = `${(p * 100).toFixed(2)}%`
                         },
                     })
-                    .catch(() => {})
+                    .catch((err) => {
+                        console.error(err)
+                    })
                 console.log(result)
             })
 
             // 取消
-            document.getElementById('abort').addEventListener('click', () => {
-                oss.store.abortMultipartUpload(abortCheckpoint.name, abortCheckpoint.uploadId)
+            document.getElementById('abort').addEventListener('click', async () => {
+                const store = await oss.getStore()
+                store.abortMultipartUpload(abortCheckpoint.name, abortCheckpoint.uploadId)
+                document.getElementById('uploadFile').value = ''
+                document.getElementById('percent').innerText = '0%'
             })
 
             // 暂停
@@ -99,13 +103,12 @@
                     .resumeMultipartUpload(abortCheckpoint.name, abortCheckpoint.file, {
                         checkpoint: abortCheckpoint,
                         progress: (p, cpt, res) => {
-                            console.log(p, cpt, res)
                             abortCheckpoint = cpt
                             document.getElementById('percent').innerHTML = `${(p * 100).toFixed(2)}%`
                         },
                     })
                     .catch((err) => {
-                        console.log(err)
+                        console.error(err)
                     })
                 console.log(result)
             })
