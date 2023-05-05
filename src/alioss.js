@@ -160,17 +160,6 @@ export default class AliOSS {
     }
 
     /**
-     * 断点续传
-     * @param {string} filename
-     * @param {File | Blob | Buffer} data
-     * @param {object} config
-     * @returns {Promise}
-     */
-    resumeMultipartUpload(filename, data, config) {
-        return this.multipartUpload(filename, data, config)
-    }
-
-    /**
      * @returns {Promise<void>}
      */
     #init() {
