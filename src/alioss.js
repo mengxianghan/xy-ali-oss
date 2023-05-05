@@ -6,7 +6,7 @@ import OSS from 'ali-oss'
 
 export default class AliOSS {
     #opts
-    #instance = null
+    #client = null
     #event
     #retryQueue
 
@@ -41,8 +41,8 @@ export default class AliOSS {
     getStore() {
         return new Promise((resolve) => {
             ;(async () => {
-                if (this.#instance) {
-                    resolve(this.#instance)
+                if (this.#client) {
+                    resolve(this.#client)
                     return
                 }
 
@@ -58,11 +58,11 @@ export default class AliOSS {
 
                 const { async, getOptions, ...options } = this.#opts
 
-                this.#instance = new OSS({
+                this.#client = new OSS({
                     ...options,
                 })
 
-                resolve(this.#instance)
+                resolve(this.#client)
             })()
         })
     }
@@ -80,7 +80,7 @@ export default class AliOSS {
                 try {
                     config = deepMerge(this.#opts?.config || {}, config)
                     const rename = config.hasOwnProperty('rename') ? config?.rename : this.#opts.rename
-                    const result = await this.#instance
+                    const result = await this.#client
                         .put(
                             generateFilename({
                                 filename,
@@ -129,8 +129,8 @@ export default class AliOSS {
                               rootPath: this.#opts?.rootPath,
                           })
                     this.#retryQueue.delete(filename)
-                    const result = await this.#instance.multipartUpload(filename, data, config).catch((err) => {
-                        if (this.#instance && this.#instance.isCancel()) {
+                    const result = await this.#client.multipartUpload(filename, data, config).catch((err) => {
+                        if (this.#client && this.#client.isCancel()) {
                             throw err
                         } else {
                             if (!this.#retryQueue.has(filename)) {
@@ -165,16 +165,16 @@ export default class AliOSS {
     #init() {
         return new Promise((resolve) => {
             ;(async () => {
-                if (this.#instance) {
+                if (this.#client) {
                     this.#event.emit()
-                    resolve(this.#instance)
+                    resolve(this.#client)
                     return
                 }
 
                 await this.getStore()
 
                 this.#event.emit()
-                resolve(this.#instance)
+                resolve(this.#client)
             })()
         })
     }
