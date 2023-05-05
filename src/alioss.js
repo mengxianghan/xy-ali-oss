@@ -8,9 +8,11 @@ export default class AliOSS {
     #opts
     #instance = null
     #event
+    #retryQueue
 
     constructor(options) {
         this.#event = new Event()
+        this.#retryQueue = new Map()
         this.#opts = deepMerge(
             {
                 async: false,
@@ -18,6 +20,7 @@ export default class AliOSS {
                 enableCdn: false,
                 rename: true,
                 cdnUrl: '',
+                retryCount: 5,
                 refreshSTSTokenInterval: 300000,
                 config: {
                     headers: {
@@ -118,19 +121,29 @@ export default class AliOSS {
                 try {
                     config = deepMerge(this.#opts?.config || {}, config)
                     const rename = config.hasOwnProperty('rename') ? config?.rename : this.#opts.rename
-                    const result = await this.#instance
-                        .multipartUpload(
-                            generateFilename({
-                                filename,
-                                rename,
-                                rootPath: this.#opts?.rootPath,
-                            }),
-                            data,
-                            config
-                        )
-                        .catch((err) => {
+                    filename = config.checkpoint
+                        ? filename
+                        : generateFilename({
+                              filename,
+                              rename,
+                              rootPath: this.#opts?.rootPath,
+                          })
+                    this.#retryQueue.delete(filename)
+                    const result = await this.#instance.multipartUpload(filename, data, config).catch((err) => {
+                        if (this.#instance && this.#instance.isCancel()) {
                             throw err
-                        })
+                        } else {
+                            if (!this.#retryQueue.has(filename)) {
+                                this.#retryQueue.set(filename, 0)
+                            }
+                            const count = this.#retryQueue.get(filename)
+                            if (count <= this.#opts.retryCount) {
+                                this.#retryQueue.set(filename, this.#retryQueue.get(filename) + 1)
+                                this.multipartUpload(filename, data, config)
+                            }
+                            throw err
+                        }
+                    })
                     resolve(
                         formatResponse({
                             data: result,
@@ -139,7 +152,7 @@ export default class AliOSS {
                         })
                     )
                 } catch (error) {
-                    reject(error.message)
+                    reject(error)
                 }
             })
             this.#init()
