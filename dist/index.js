@@ -692,8 +692,8 @@
       _classPrivateFieldSet(this, _opts, deepMerge({
         async: false,
         rootPath: '',
-        enableCdn: false,
         rename: true,
+        enableCdn: false,
         cdnUrl: '',
         retryCount: 5,
         refreshSTSTokenInterval: 300000,
@@ -844,7 +844,7 @@
                         _classPrivateFieldGet(_this3, _retryQueue).set(filename, 0);
                       }
                       var count = _classPrivateFieldGet(_this3, _retryQueue).get(filename);
-                      if (count <= _classPrivateFieldGet(_this3, _opts).retryCount) {
+                      if (count < _classPrivateFieldGet(_this3, _opts).retryCount) {
                         _classPrivateFieldGet(_this3, _retryQueue).set(filename, _classPrivateFieldGet(_this3, _retryQueue).get(filename) + 1);
                         _this3.multipartUpload(filename, data, config);
                       }
