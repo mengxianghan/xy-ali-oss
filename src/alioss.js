@@ -17,8 +17,8 @@ export default class AliOSS {
             {
                 async: false,
                 rootPath: '',
-                enableCdn: false,
                 rename: true,
+                enableCdn: false,
                 cdnUrl: '',
                 retryCount: 5,
                 refreshSTSTokenInterval: 300000,
@@ -137,7 +137,7 @@ export default class AliOSS {
                                 this.#retryQueue.set(filename, 0)
                             }
                             const count = this.#retryQueue.get(filename)
-                            if (count <= this.#opts.retryCount) {
+                            if (count < this.#opts.retryCount) {
                                 this.#retryQueue.set(filename, this.#retryQueue.get(filename) + 1)
                                 this.multipartUpload(filename, data, config)
                             }
