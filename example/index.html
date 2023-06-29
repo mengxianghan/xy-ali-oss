@@ -30,9 +30,9 @@
         <script src="../dist/index.min.js"></script>
         <script>
             const options = {
-                accessKeyId: '',
-                accessKeySecret: '',
-                bucket: '',
+                accessKeyId: 'LTAI5tGEzgjeSoZa4E1EAzXJ',
+                accessKeySecret: '9s79FK0uiFppbVpEixqtni6xW0EXAG',
+                bucket: 'xuanyu-cdn',
                 region: 'oss-cn-beijing',
 
                 async: false,
@@ -100,7 +100,7 @@
             // 继续上传
             document.getElementById('resume').addEventListener('click', async () => {
                 const result = await oss
-                    .resumeMultipartUpload(abortCheckpoint.name, abortCheckpoint.file, {
+                    .multipartUpload(abortCheckpoint.name, abortCheckpoint.file, {
                         checkpoint: abortCheckpoint,
                         progress: (p, cpt, res) => {
                             abortCheckpoint = cpt
