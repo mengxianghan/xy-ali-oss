@@ -814,20 +814,25 @@ var AliOSS = /*#__PURE__*/function () {
       var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
       return new Promise(function (resolve, reject) {
         _classPrivateFieldGet(_this3, _event).on(guid(), /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
-          var _classPrivateFieldGet7, _config2, _classPrivateFieldGet8, _classPrivateFieldGet9, rename, result;
+          var _classPrivateFieldGet7, _config2, _config3, _classPrivateFieldGet8, _classPrivateFieldGet9, isRetry, rename, result;
           return _regeneratorRuntime().wrap(function _callee3$(_context3) {
             while (1) switch (_context3.prev = _context3.next) {
               case 0:
                 _context3.prev = 0;
                 config = deepMerge(((_classPrivateFieldGet7 = _classPrivateFieldGet(_this3, _opts)) === null || _classPrivateFieldGet7 === void 0 ? void 0 : _classPrivateFieldGet7.config) || {}, config);
-                rename = config.hasOwnProperty('rename') ? (_config2 = config) === null || _config2 === void 0 ? void 0 : _config2.rename : _classPrivateFieldGet(_this3, _opts).rename;
-                filename = config.checkpoint ? filename : generateFilename({
+                // 是否重试
+                isRetry = ((_config2 = config) === null || _config2 === void 0 ? void 0 : _config2.__isRetry) || false;
+                rename = config.hasOwnProperty('rename') ? (_config3 = config) === null || _config3 === void 0 ? void 0 : _config3.rename : _classPrivateFieldGet(_this3, _opts).rename;
+                filename = config.checkpoint || isRetry ? filename : generateFilename({
                   filename: filename,
                   rename: rename,
                   rootPath: (_classPrivateFieldGet8 = _classPrivateFieldGet(_this3, _opts)) === null || _classPrivateFieldGet8 === void 0 ? void 0 : _classPrivateFieldGet8.rootPath
                 });
-                _classPrivateFieldGet(_this3, _retryQueue)["delete"](filename);
-                _context3.next = 7;
+                // 如果不是重试，删除队列
+                if (!isRetry) {
+                  _classPrivateFieldGet(_this3, _retryQueue)["delete"](filename);
+                }
+                _context3.next = 8;
                 return _classPrivateFieldGet(_this3, _client).multipartUpload(filename, data, config)["catch"](function (err) {
                   if (_classPrivateFieldGet(_this3, _client) && _classPrivateFieldGet(_this3, _client).isCancel()) {
                     throw err;
@@ -837,30 +842,32 @@ var AliOSS = /*#__PURE__*/function () {
                     }
                     var count = _classPrivateFieldGet(_this3, _retryQueue).get(filename);
                     if (count < _classPrivateFieldGet(_this3, _opts).retryCount) {
-                      _classPrivateFieldGet(_this3, _retryQueue).set(filename, _classPrivateFieldGet(_this3, _retryQueue).get(filename) + 1);
-                      _this3.multipartUpload(filename, data, config);
+                      _classPrivateFieldGet(_this3, _retryQueue).set(filename, count + 1);
+                      _this3.multipartUpload(filename, data, _objectSpread2(_objectSpread2({}, config), {}, {
+                        __isRetry: true
+                      }));
                     }
                     throw err;
                   }
                 });
-              case 7:
+              case 8:
                 result = _context3.sent;
                 resolve(formatResponse({
                   data: result,
                   enableCdn: _classPrivateFieldGet(_this3, _opts).enableCdn,
                   cdnUrl: (_classPrivateFieldGet9 = _classPrivateFieldGet(_this3, _opts)) === null || _classPrivateFieldGet9 === void 0 ? void 0 : _classPrivateFieldGet9.cdnUrl
                 }));
-                _context3.next = 14;
+                _context3.next = 15;
                 break;
-              case 11:
-                _context3.prev = 11;
+              case 12:
+                _context3.prev = 12;
                 _context3.t0 = _context3["catch"](0);
                 reject(_context3.t0);
-              case 14:
+              case 15:
               case "end":
                 return _context3.stop();
             }
-          }, _callee3, null, [[0, 11]]);
+          }, _callee3, null, [[0, 12]]);
         })));
         _classPrivateMethodGet(_this3, _init, _init2).call(_this3);
       });
