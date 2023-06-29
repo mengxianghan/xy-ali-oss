@@ -120,15 +120,21 @@ export default class AliOSS {
             this.#event.on(guid(), async () => {
                 try {
                     config = deepMerge(this.#opts?.config || {}, config)
+                    // 是否重试
+                    const isRetry = config?.__isRetry || false
                     const rename = config.hasOwnProperty('rename') ? config?.rename : this.#opts.rename
-                    filename = config.checkpoint
-                        ? filename
-                        : generateFilename({
-                              filename,
-                              rename,
-                              rootPath: this.#opts?.rootPath,
-                          })
-                    this.#retryQueue.delete(filename)
+                    filename =
+                        config.checkpoint || isRetry
+                            ? filename
+                            : generateFilename({
+                                  filename,
+                                  rename,
+                                  rootPath: this.#opts?.rootPath,
+                              })
+                    // 如果不是重试，删除队列
+                    if (!isRetry) {
+                        this.#retryQueue.delete(filename)
+                    }
                     const result = await this.#client.multipartUpload(filename, data, config).catch((err) => {
                         if (this.#client && this.#client.isCancel()) {
                             throw err
@@ -136,10 +142,12 @@ export default class AliOSS {
                             if (!this.#retryQueue.has(filename)) {
                                 this.#retryQueue.set(filename, 0)
                             }
+
                             const count = this.#retryQueue.get(filename)
+
                             if (count < this.#opts.retryCount) {
-                                this.#retryQueue.set(filename, this.#retryQueue.get(filename) + 1)
-                                this.multipartUpload(filename, data, config)
+                                this.#retryQueue.set(filename, count + 1)
+                                this.multipartUpload(filename, data, { ...config, __isRetry: true })
                             }
                             throw err
                         }
