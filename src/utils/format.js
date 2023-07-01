@@ -18,8 +18,8 @@ export function formatPath(path) {
  * @returns {object}
  */
 export function formatResponse({ data, enableCdn, cdnUrl }) {
-    const { name, res } = data
-    const { requestUrls, statusCode } = res
+    const { name, res } = data || {}
+    const { requestUrls, statusCode } = res || {}
     const requestUrl = requestUrls?.[0]?.replace(/\?.*/gi, '') || ''
     const url = enableCdn ? requestUrl : generateUrl({ url: requestUrl, cdnUrl })
     const suffix = getSuffix(url)
