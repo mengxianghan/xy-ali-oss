@@ -518,10 +518,12 @@
     var data = _ref.data,
       enableCdn = _ref.enableCdn,
       cdnUrl = _ref.cdnUrl;
-    var name = data.name,
-      res = data.res;
-    var requestUrls = res.requestUrls,
-      statusCode = res.statusCode;
+    var _ref2 = data || {},
+      name = _ref2.name,
+      res = _ref2.res;
+    var _ref3 = res || {},
+      requestUrls = _ref3.requestUrls,
+      statusCode = _ref3.statusCode;
     var requestUrl = (requestUrls === null || requestUrls === void 0 ? void 0 : (_requestUrls$ = requestUrls[0]) === null || _requestUrls$ === void 0 ? void 0 : _requestUrls$.replace(/\?.*/gi, '')) || '';
     var url = enableCdn ? requestUrl : generateUrl({
       url: requestUrl,
@@ -663,6 +665,7 @@
   var _client = /*#__PURE__*/new WeakMap();
   var _event = /*#__PURE__*/new WeakMap();
   var _retryQueue = /*#__PURE__*/new WeakMap();
+  var _retryMultipartUpload = /*#__PURE__*/new WeakSet();
   var _init = /*#__PURE__*/new WeakSet();
   var AliOSS = /*#__PURE__*/function () {
     function AliOSS(options) {
@@ -671,6 +674,14 @@
        * @returns {Promise<void>}
        */
       _classPrivateMethodInitSpec(this, _init);
+      /**
+       * 重试分片上传
+       * @param {string} filename
+       * @param {File|Blob|Buffer} data
+       * @param {object} config
+       * @returns {Promise}
+       */
+      _classPrivateMethodInitSpec(this, _retryMultipartUpload);
       _classPrivateFieldInitSpec(this, _opts, {
         writable: true,
         value: void 0
@@ -811,7 +822,7 @@
       /**
        * 分片上传
        * @param {string} filename
-       * @param {File | Blob | Buffer} data
+       * @param {File|Blob|Buffer} data
        * @param {object} config
        * @returns {Promise}
        */
@@ -821,61 +832,85 @@
         var _this3 = this;
         var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
         return new Promise(function (resolve, reject) {
-          _classPrivateFieldGet(_this3, _event).on(guid(), /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
-            var _classPrivateFieldGet7, _config2, _config3, _classPrivateFieldGet8, _classPrivateFieldGet9, isRetry, rename, result;
-            return _regeneratorRuntime().wrap(function _callee3$(_context3) {
-              while (1) switch (_context3.prev = _context3.next) {
+          _classPrivateFieldGet(_this3, _event).on(guid(), /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee4() {
+            var _classPrivateFieldGet7, _config2, _classPrivateFieldGet8, _classPrivateFieldGet9, rename, checkpoint, result;
+            return _regeneratorRuntime().wrap(function _callee4$(_context4) {
+              while (1) switch (_context4.prev = _context4.next) {
                 case 0:
-                  _context3.prev = 0;
+                  _context4.prev = 0;
                   config = deepMerge(((_classPrivateFieldGet7 = _classPrivateFieldGet(_this3, _opts)) === null || _classPrivateFieldGet7 === void 0 ? void 0 : _classPrivateFieldGet7.config) || {}, config);
-                  // 是否重试
-                  isRetry = ((_config2 = config) === null || _config2 === void 0 ? void 0 : _config2.__isRetry) || false;
-                  rename = config.hasOwnProperty('rename') ? (_config3 = config) === null || _config3 === void 0 ? void 0 : _config3.rename : _classPrivateFieldGet(_this3, _opts).rename;
-                  filename = config.checkpoint || isRetry ? filename : generateFilename({
+                  rename = config.hasOwnProperty('rename') ? (_config2 = config) === null || _config2 === void 0 ? void 0 : _config2.rename : _classPrivateFieldGet(_this3, _opts).rename;
+                  filename = config.checkpoint ? filename : generateFilename({
                     filename: filename,
                     rename: rename,
                     rootPath: (_classPrivateFieldGet8 = _classPrivateFieldGet(_this3, _opts)) === null || _classPrivateFieldGet8 === void 0 ? void 0 : _classPrivateFieldGet8.rootPath
                   });
-                  // 如果不是重试，删除队列
-                  if (!isRetry) {
-                    _classPrivateFieldGet(_this3, _retryQueue)["delete"](filename);
-                  }
-                  _context3.next = 8;
-                  return _classPrivateFieldGet(_this3, _client).multipartUpload(filename, data, config)["catch"](function (err) {
-                    if (_classPrivateFieldGet(_this3, _client) && _classPrivateFieldGet(_this3, _client).isCancel()) {
-                      throw err;
-                    } else {
-                      if (!_classPrivateFieldGet(_this3, _retryQueue).has(filename)) {
-                        _classPrivateFieldGet(_this3, _retryQueue).set(filename, 0);
+                  checkpoint = null;
+                  _context4.next = 7;
+                  return _classPrivateFieldGet(_this3, _client).multipartUpload(filename, data, _objectSpread2(_objectSpread2({}, config), {}, {
+                    progress: function progress(p, cpt, res) {
+                      var _config3;
+                      if ((_config3 = config) !== null && _config3 !== void 0 && _config3.progress) {
+                        config.progress(p, cpt, res);
                       }
-                      var count = _classPrivateFieldGet(_this3, _retryQueue).get(filename);
-                      if (count < _classPrivateFieldGet(_this3, _opts).retryCount) {
-                        _classPrivateFieldGet(_this3, _retryQueue).set(filename, count + 1);
-                        _this3.multipartUpload(filename, data, _objectSpread2(_objectSpread2({}, config), {}, {
-                          __isRetry: true
-                        }));
-                      }
-                      throw err;
+                      checkpoint = cpt;
                     }
-                  });
-                case 8:
-                  result = _context3.sent;
+                  }))["catch"]( /*#__PURE__*/function () {
+                    var _ref4 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3(error) {
+                      var result;
+                      return _regeneratorRuntime().wrap(function _callee3$(_context3) {
+                        while (1) switch (_context3.prev = _context3.next) {
+                          case 0:
+                            if (!(_classPrivateFieldGet(_this3, _opts).retryCount === 0)) {
+                              _context3.next = 2;
+                              break;
+                            }
+                            throw error;
+                          case 2:
+                            if (!(_classPrivateFieldGet(_this3, _client) && _classPrivateFieldGet(_this3, _client).isCancel())) {
+                              _context3.next = 4;
+                              break;
+                            }
+                            throw error;
+                          case 4:
+                            // 开始重试
+                            _classPrivateFieldGet(_this3, _retryQueue).set(filename, {
+                              count: 1,
+                              checkpoint: checkpoint
+                            });
+                            _context3.next = 7;
+                            return _classPrivateMethodGet(_this3, _retryMultipartUpload, _retryMultipartUpload2).call(_this3, filename, data, config);
+                          case 7:
+                            result = _context3.sent;
+                            resolve(result);
+                          case 9:
+                          case "end":
+                            return _context3.stop();
+                        }
+                      }, _callee3);
+                    }));
+                    return function (_x) {
+                      return _ref4.apply(this, arguments);
+                    };
+                  }());
+                case 7:
+                  result = _context4.sent;
                   resolve(formatResponse({
                     data: result,
                     enableCdn: _classPrivateFieldGet(_this3, _opts).enableCdn,
                     cdnUrl: (_classPrivateFieldGet9 = _classPrivateFieldGet(_this3, _opts)) === null || _classPrivateFieldGet9 === void 0 ? void 0 : _classPrivateFieldGet9.cdnUrl
                   }));
-                  _context3.next = 15;
+                  _context4.next = 14;
                   break;
-                case 12:
-                  _context3.prev = 12;
-                  _context3.t0 = _context3["catch"](0);
-                  reject(_context3.t0);
-                case 15:
+                case 11:
+                  _context4.prev = 11;
+                  _context4.t0 = _context4["catch"](0);
+                  reject(_context4.t0);
+                case 14:
                 case "end":
-                  return _context3.stop();
+                  return _context4.stop();
               }
-            }, _callee3, null, [[0, 12]]);
+            }, _callee4, null, [[0, 11]]);
           })));
           _classPrivateMethodGet(_this3, _init, _init2).call(_this3);
         });
@@ -883,31 +918,118 @@
     }]);
     return AliOSS;
   }();
-  function _init2() {
+  function _retryMultipartUpload2(filename, data) {
     var _this4 = this;
-    return new Promise(function (resolve) {
-      _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee4() {
-        return _regeneratorRuntime().wrap(function _callee4$(_context4) {
-          while (1) switch (_context4.prev = _context4.next) {
+    var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    return new Promise(function (resolve, reject) {
+      _classPrivateFieldGet(_this4, _event).on(guid(), /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee6() {
+        var _classPrivateFieldGet10, queue, checkpoint, result;
+        return _regeneratorRuntime().wrap(function _callee6$(_context6) {
+          while (1) switch (_context6.prev = _context6.next) {
             case 0:
-              if (!_classPrivateFieldGet(_this4, _client)) {
-                _context4.next = 4;
+              _context6.prev = 0;
+              queue = _classPrivateFieldGet(_this4, _retryQueue).get(filename);
+              checkpoint = (queue === null || queue === void 0 ? void 0 : queue.checkpoint) || null;
+              _context6.next = 5;
+              return _classPrivateFieldGet(_this4, _client).multipartUpload(filename, data, _objectSpread2(_objectSpread2({}, config), {}, {
+                checkpoint: checkpoint,
+                progress: function progress(p, cpt, res) {
+                  if (config !== null && config !== void 0 && config.progress) {
+                    config.progress(p, cpt, res);
+                  }
+                  checkpoint = cpt;
+                }
+              }))["catch"]( /*#__PURE__*/function () {
+                var _ref6 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee5(error) {
+                  var count, _result;
+                  return _regeneratorRuntime().wrap(function _callee5$(_context5) {
+                    while (1) switch (_context5.prev = _context5.next) {
+                      case 0:
+                        if (!(_classPrivateFieldGet(_this4, _client) && _classPrivateFieldGet(_this4, _client).isCancel())) {
+                          _context5.next = 4;
+                          break;
+                        }
+                        throw error;
+                      case 4:
+                        // 判断是否超过设置的重试次数
+                        count = (queue === null || queue === void 0 ? void 0 : queue.count) || 1;
+                        if (!(count < _classPrivateFieldGet(_this4, _opts).retryCount)) {
+                          _context5.next = 13;
+                          break;
+                        }
+                        // 未超过重试次数，继续重试
+                        _classPrivateFieldGet(_this4, _retryQueue).set(filename, _objectSpread2(_objectSpread2({}, queue), {}, {
+                          count: count + 1,
+                          checkpoint: checkpoint
+                        }));
+                        _context5.next = 9;
+                        return _classPrivateMethodGet(_this4, _retryMultipartUpload, _retryMultipartUpload2).call(_this4, filename, data, config);
+                      case 9:
+                        _result = _context5.sent;
+                        resolve(_result);
+                        _context5.next = 15;
+                        break;
+                      case 13:
+                        // 已超过重试次数，停止重试，并从重试队列删除
+                        _classPrivateFieldGet(_this4, _retryQueue)["delete"](filename);
+                        throw error;
+                      case 15:
+                      case "end":
+                        return _context5.stop();
+                    }
+                  }, _callee5);
+                }));
+                return function (_x2) {
+                  return _ref6.apply(this, arguments);
+                };
+              }());
+            case 5:
+              result = _context6.sent;
+              resolve(formatResponse({
+                data: result,
+                enableCdn: _classPrivateFieldGet(_this4, _opts).enableCdn,
+                cdnUrl: (_classPrivateFieldGet10 = _classPrivateFieldGet(_this4, _opts)) === null || _classPrivateFieldGet10 === void 0 ? void 0 : _classPrivateFieldGet10.cdnUrl
+              }));
+              _context6.next = 12;
+              break;
+            case 9:
+              _context6.prev = 9;
+              _context6.t0 = _context6["catch"](0);
+              reject(_context6.t0);
+            case 12:
+            case "end":
+              return _context6.stop();
+          }
+        }, _callee6, null, [[0, 9]]);
+      })));
+      _classPrivateMethodGet(_this4, _init, _init2).call(_this4);
+    });
+  }
+  function _init2() {
+    var _this5 = this;
+    return new Promise(function (resolve) {
+      _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee7() {
+        return _regeneratorRuntime().wrap(function _callee7$(_context7) {
+          while (1) switch (_context7.prev = _context7.next) {
+            case 0:
+              if (!_classPrivateFieldGet(_this5, _client)) {
+                _context7.next = 4;
                 break;
               }
-              _classPrivateFieldGet(_this4, _event).emit();
-              resolve(_classPrivateFieldGet(_this4, _client));
-              return _context4.abrupt("return");
+              _classPrivateFieldGet(_this5, _event).emit();
+              resolve(_classPrivateFieldGet(_this5, _client));
+              return _context7.abrupt("return");
             case 4:
-              _context4.next = 6;
-              return _this4.getStore();
+              _context7.next = 6;
+              return _this5.getStore();
             case 6:
-              _classPrivateFieldGet(_this4, _event).emit();
-              resolve(_classPrivateFieldGet(_this4, _client));
+              _classPrivateFieldGet(_this5, _event).emit();
+              resolve(_classPrivateFieldGet(_this5, _client));
             case 8:
             case "end":
-              return _context4.stop();
+              return _context7.stop();
           }
-        }, _callee4);
+        }, _callee7);
       }))();
     });
   }
