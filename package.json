@@ -1,6 +1,6 @@
 {
     "name": "xy-ali-oss",
-    "version": "1.1.2",
+    "version": "1.1.3",
     "description": "阿里 oss 文件管理",
     "main": "src/index.js",
     "browser": "dist/index.js",
@@ -22,7 +22,8 @@
     "author": "mengxianghan",
     "license": "ISC",
     "dependencies": {
-        "ali-oss": "^6.17.1"
+        "ali-oss": "^6.17.1",
+        "lodash-es": "^4.17.21"
     },
     "devDependencies": {
         "@babel/core": "^7.21.4",

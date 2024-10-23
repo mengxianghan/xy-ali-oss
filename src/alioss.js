@@ -1,6 +1,7 @@
 import { generateFilename } from './utils/generate'
 import { deepMerge, guid } from './utils'
 import { formatResponse } from './utils/format'
+import { cloneDeep } from 'lodash-es'
 import Event from './utils/event'
 import OSS from 'ali-oss'
 
@@ -13,24 +14,26 @@ export default class AliOSS {
     constructor(options) {
         this.#event = new Event()
         this.#retryQueue = new Map()
-        this.#opts = deepMerge(
-            {
-                async: false,
-                rootPath: '',
-                rename: true,
-                enableCdn: false,
-                cdnUrl: '',
-                retryCount: 5,
-                refreshSTSTokenInterval: 300000,
-                config: {
-                    headers: {
-                        'Cache-Control': 'public',
+        this.#opts = cloneDeep(
+            deepMerge(
+                {
+                    async: false,
+                    rootPath: '',
+                    rename: true,
+                    enableCdn: false,
+                    cdnUrl: '',
+                    retryCount: 5,
+                    refreshSTSTokenInterval: 300000,
+                    config: {
+                        headers: {
+                            'Cache-Control': 'public',
+                        },
                     },
+                    refreshSTSToken: () => {},
+                    getOptions: () => {},
                 },
-                refreshSTSToken: () => {},
-                getOptions: () => {},
-            },
-            options
+                options
+            )
         )
     }
 
@@ -80,7 +83,9 @@ export default class AliOSS {
         return new Promise((resolve, reject) => {
             this.#event.on(guid(), async () => {
                 try {
-                    config = deepMerge(this.#opts?.config || {}, config)
+                    config = cloneDeep(
+                        deepMerge(this.#opts?.config || {}, config)
+                    )
                     const rename = config.hasOwnProperty('rename')
                         ? config?.rename
                         : this.#opts.rename
@@ -123,7 +128,9 @@ export default class AliOSS {
         return new Promise((resolve, reject) => {
             this.#event.on(guid(), async () => {
                 try {
-                    config = deepMerge(this.#opts?.config || {}, config)
+                    config = cloneDeep(
+                        deepMerge(this.#opts?.config || {}, config)
+                    )
                     const rename = config.hasOwnProperty('rename')
                         ? config?.rename
                         : this.#opts.rename
