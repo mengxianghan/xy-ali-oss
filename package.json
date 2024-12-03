@@ -1,6 +1,6 @@
 {
     "name": "xy-ali-oss",
-    "version": "1.1.4",
+    "version": "1.1.5",
     "description": "阿里 oss 文件管理",
     "main": "src/index.js",
     "browser": "dist/index.js",
@@ -21,7 +21,8 @@
     ],
     "files": [
         "package.json",
-        "dist"
+        "dist",
+        "src"
     ],
     "author": "mengxianghan",
     "license": "ISC",
