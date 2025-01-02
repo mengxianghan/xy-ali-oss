@@ -49,7 +49,7 @@ export default class AliOSS {
                     return
                 }
 
-                if (this.#event.length - 1) return
+                // if (this.#event.length - 1) return
 
                 if (this.#opts.async) {
                     const options = await this.#opts
